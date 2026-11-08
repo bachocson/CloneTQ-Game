@@ -1,0 +1,16 @@
+{
+  "name": "giang-ho-chuong-mon",
+  "version": "0.1.0",
+  "description": "Game kiếm hiệp cày cuốc, chạy trên trình duyệt điện thoại",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "bot": "node tools/bot.js",
+    "serve": "python3 -m http.server 8080"
+  },
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "esbuild": "^0.24.2"
+  }
+}
