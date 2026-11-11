@@ -1,14 +1,18 @@
-#!/usr/bin/env node
-// Bot tự chơi để cân bằng game. Chạy: node tools/bot.js --days=5 --interval=15 --active=14 --seed=1
+// Bot tự chơi để cân bằng game. Chạy: npm run bot -- --days=5 --interval=15 --active=14 --seed=1
 // Mô phỏng một người chơi vào game mỗi `interval` phút trong `active` giờ mỗi ngày, rồi in báo cáo tiến trình.
 
-import * as G from '../src/engine/game.js';
-import { BUILDING_ORDER, BUILDINGS } from '../src/data/buildings.js';
-import { HEROES } from '../src/data/heroes.js';
-import { TROOP_TYPES } from '../src/data/troops.js';
-import { EQUIP_SLOTS } from '../src/data/equipment.js';
+import * as G from '../core/src/index.js';
+import type { GameState, Hero } from '../core/src/index.js';
+import { loadConfig } from './load-config.js';
 
-const args = Object.fromEntries(process.argv.slice(2).map((a) => {
+const CFG = loadConfig(process.argv.find((a) => a.startsWith('--config='))?.slice(9));
+const BUILDING_ORDER = CFG.buildingOrder;
+const BUILDINGS = CFG.buildings;
+const HEROES = CFG.heroes;
+const TROOP_TYPES = CFG.troopTypes;
+const EQUIP_SLOTS = CFG.equipSlots;
+
+const args: Record<string, string | boolean> = Object.fromEntries(process.argv.slice(2).map((a) => {
   const [k, v] = a.replace(/^--/, '').split('=');
   return [k, v === undefined ? true : v];
 }));
@@ -21,36 +25,36 @@ const JSON_OUT = !!args.json;
 
 const MIN = 60 * 1000;
 const t0 = Date.UTC(2026, 0, 1, 8, 0, 0);
-const state = G.newGame(t0, SEED);
-const events = [];
+const state: GameState = G.newGame(t0, SEED);
+const events: { h: number; msg: string }[] = [];
 const counters = { fights: 0, losses: 0, sweeps: 0, capped: 0, checkins: 0, upgrades: 0 };
 
-function log(now, msg) {
+function log(now: number, msg: string) {
   const h = (now - t0) / 3600000;
   events.push({ h: Math.round(h * 100) / 100, msg });
   if (VERBOSE) console.log(`[${fmtH(h)}] ${msg}`);
 }
-function fmtH(h) {
+function fmtH(h: number) {
   const d = Math.floor(h / 24);
   const hh = Math.floor(h % 24);
   const mm = Math.round((h * 60) % 60);
   return `ngày ${d + 1} ${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
 }
 
-function clone(s) {
+function clone(s: GameState): GameState {
   return JSON.parse(JSON.stringify(s));
 }
 
-const BUILD_WEIGHT = { chinhDien: 0, ruong: 1, xuongGo: 1, moSat: 1.1, tienTrang: 1, khoHang: 1.2, luyenVo: 0.9, tuuLau: 1.6, loRen: 1.3, tangKinh: 1.8 };
+const BUILD_WEIGHT: Record<string, number> = { chinhDien: 0, ruong: 1, xuongGo: 1, moSat: 1.1, tienTrang: 1, khoHang: 1.2, luyenVo: 0.9, tuuLau: 1.6, loRen: 1.3, tangKinh: 1.8 };
 
-function chooseBuilding(now) {
+function chooseBuilding(now: number) {
   if (state.queue) return;
   const cands = [];
   for (const id of BUILDING_ORDER) {
     const chk = G.upgradeCheck(state, id);
     if (!chk.ok) continue;
     const lv = state.buildings[id] || 0;
-    let score = id === 'chinhDien' ? -1 : lv * BUILD_WEIGHT[id];
+    let score = id === 'chinhDien' ? -1 : lv * (BUILD_WEIGHT[id] ?? 1);
     // Kho đầy thì ưu tiên kho
     if (id === 'khoHang' && Object.entries(state.res).some(([k, v]) => k !== 'nguyenbao' && v >= G.storageCap(state) * 0.9)) score -= 5;
     cands.push({ id, score });
@@ -65,25 +69,25 @@ function chooseBuilding(now) {
   }
 }
 
-function heroValue(h) {
+function heroValue(h: Hero) {
   return G.heroPower(state, h) + HEROES[h.tid].q * 40;
 }
 
 function arrangeTeam() {
   const limit = G.deployLimit(state);
   const sorted = [...state.heroes].sort((a, b) => heroValue(b) - heroValue(a)).slice(0, limit);
-  const team = [null, null, null, null, null, null];
+  const team: (number | null)[] = [null, null, null, null, null, null];
   const front = [1, 0, 2, 4, 3, 5];
   const back = [4, 3, 5, 1, 0, 2];
   for (const h of sorted) {
     const order = TROOP_TYPES[h.troopType].range === 'ranged' ? back : front;
     const slot = order.find((s) => team[s] === null);
-    team[slot] = h.uid;
+    if (slot !== undefined) team[slot] = h.uid;
   }
   state.team = team;
 }
 
-function tavern(now) {
+function tavern(now: number) {
   if (!G.tavernOpen(state)) return;
   if (now >= state.tavern.nextFree) G.refreshTavern(state, now, 'free');
   for (const tid of [...state.tavern.candidates].sort((a, b) => HEROES[b].q - HEROES[a].q)) {
@@ -101,7 +105,7 @@ function tavern(now) {
 }
 
 function growHeroes() {
-  const team = state.team.filter(Boolean).map((uid) => G.findHero(state, uid));
+  const team = state.team.filter(Boolean).map((uid) => G.findHero(state, uid) as Hero);
   for (const item of ['daiHoanDan', 'tieuHoanDan']) {
     let guard = 200;
     while (state.items[item] > 0 && guard-- > 0) {
@@ -123,10 +127,10 @@ function growHeroes() {
   }
 }
 
-function smithy(now) {
+function smithy(_now: number) {
   const maxT = G.maxForgeTier(state);
   if (!maxT) return;
-  const team = state.team.filter(Boolean).map((uid) => G.findHero(state, uid));
+  const team = state.team.filter(Boolean).map((uid) => G.findHero(state, uid) as Hero);
   for (const h of team) {
     for (const slot of Object.keys(EQUIP_SLOTS)) {
       const curUid = h.equip[slot];
@@ -135,7 +139,7 @@ function smithy(now) {
       const cost = G.forgeCost(maxT);
       if (!G.canAfford(state, cost) || state.res.sat < cost.sat * 1.5) continue;
       const r = G.forge(state, slot, maxT);
-      if (r.ok) {
+      if (r.ok && r.eq) {
         G.equip(state, h.uid, r.eq.uid);
         if (cur) G.sell(state, cur.uid);
       }
@@ -152,16 +156,16 @@ function smithy(now) {
   }
 }
 
-function battles(now) {
+function battles(now: number) {
   let guard = 30;
   while (guard-- > 0 && state.stamina.cur >= 6) {
     const next = G.nextStage(state);
     let fought = false;
     if (next && G.isStageUnlocked(state, next)) {
       const preview = clone(state);
-      const pr = G.fightStage(preview, next);
+      const pr = G.fightStage(preview, next) as G.FightOutcome;
       if (pr.ok && pr.result.win) {
-        const r = G.fightStage(state, next);
+        const r = G.fightStage(state, next) as G.FightOutcome;
         counters.fights++;
         if (r.result.win) log(now, `Vượt ải ${next} (${r.stars} sao, ${r.result.rounds} hiệp)`);
         else counters.losses++;
@@ -176,7 +180,7 @@ function battles(now) {
     const notThree = Object.keys(stars).filter((id) => stars[id] < 3).sort((a, b) => G.parseStage(b).index - G.parseStage(a).index)[0];
     if (notThree) {
       const preview = clone(state);
-      const pr = G.fightStage(preview, notThree);
+      const pr = G.fightStage(preview, notThree) as G.FightOutcome;
       if (pr.ok && pr.result.win && pr.stars === 3) {
         G.fightStage(state, notThree);
         counters.fights++;
@@ -195,7 +199,7 @@ function battles(now) {
   }
 }
 
-function checkin(now) {
+function checkin(now: number) {
   counters.checkins++;
   const done = G.tick(state, now);
   for (const q of done) log(now, `${BUILDINGS[q.id].name} → cấp ${q.toLevel}`);
@@ -211,7 +215,7 @@ function checkin(now) {
   chooseBuilding(now);
 }
 
-const daily = [];
+const daily: any[] = [];
 for (let day = 0; day < DAYS; day++) {
   const dayStart = t0 + day * 24 * 60 * MIN;
   for (let m = 0; m < ACTIVE * 60; m += INTERVAL) checkin(dayStart + m * MIN);
@@ -235,10 +239,10 @@ if (JSON_OUT) {
   console.log(`\n=== Bot tự chơi: ${DAYS} ngày, vào game mỗi ${INTERVAL} phút, ${ACTIVE} giờ/ngày, seed ${SEED} ===\n`);
   for (const d of daily) {
     console.log(`Ngày ${d.day}: cấp ${d.level}, ải tiếp theo ${d.stage}`);
-    console.log(`  Công trình: ${Object.entries(d.buildings).map(([k, v]) => `${BUILDINGS[k].name} ${v}`).join(', ')}`);
-    console.log(`  Bậc đệ tử: ${Object.entries(d.tiers).map(([k, v]) => `${TROOP_TYPES[k].name} ${v}`).join(', ')}`);
+    console.log(`  Công trình: ${Object.entries(d.buildings as Record<string, number>).map(([k, v]) => `${BUILDINGS[k].name} ${v}`).join(', ')}`);
+    console.log(`  Bậc đệ tử: ${Object.entries(d.tiers as Record<string, number>).map(([k, v]) => `${TROOP_TYPES[k].name} ${v}`).join(', ')}`);
     console.log(`  Hiệp khách: ${d.heroes}`);
-    console.log(`  Tài nguyên (kho ${d.cap}): ${Object.entries(d.res).map(([k, v]) => `${k} ${v}`).join(', ')}`);
+    console.log(`  Tài nguyên (kho ${d.cap}): ${Object.entries(d.res as Record<string, number>).map(([k, v]) => `${k} ${v}`).join(', ')}`);
   }
   const milestones = events.filter((e) => /Vượt ải \d-5|lên cấp (5|10|15|20)$/.test(e.msg));
   console.log('\nMốc chính:');

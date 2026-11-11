@@ -1,0 +1,1776 @@
+{
+  "version": "0.2.0",
+  "balance": {
+    "startRes": {
+      "luong": 2500,
+      "go": 2000,
+      "sat": 1000,
+      "bac": 1500,
+      "nguyenbao": 200
+    },
+    "startItems": {
+      "tieuHoanDan": 10,
+      "daiHoanDan": 0,
+      "huyenThiet": 20,
+      "biKip": 2
+    },
+    "offlineCapHours": 12,
+    "stamina": {
+      "max": 120,
+      "regenSeconds": 120,
+      "perWin": 6,
+      "perLoss": 1
+    },
+    "playerExp": {
+      "base": 70,
+      "exp": 1.75
+    },
+    "playerMaxLevel": 60,
+    "heroExp": {
+      "base": 25,
+      "exp": 1.6
+    },
+    "troops": {
+      "base": 150,
+      "perCanCot": 4,
+      "perLuyenVo": 60
+    },
+    "refill": {
+      "luong": 1,
+      "bac": 0.15
+    },
+    "combat": {
+      "damageK": 0.03,
+      "counterBonus": 1.3,
+      "counterPenalty": 0.8,
+      "schoolBonus": 0.15,
+      "maxRounds": 20,
+      "khiStart": 50,
+      "khiPerAttack": 25,
+      "khiPerHit": 10,
+      "critBase": 0.05,
+      "critPerNgoTinh": 0.0004,
+      "critMult": 1.5,
+      "skillLevelBonus": 0.08,
+      "skillMinTroopPct": 0.35
+    },
+    "starThresholds": [
+      0.25,
+      0.55
+    ],
+    "speedUp": {
+      "freeSeconds": 30,
+      "perMinute": 1
+    },
+    "baseTrickle": 30,
+    "tavern": {
+      "freeRefreshSeconds": 7200,
+      "refreshCostBac": 300,
+      "refreshCostNguyenBao": 20,
+      "candidates": 3,
+      "rosterBase": 4,
+      "rosterPerLevel": 0.5
+    },
+    "enemy": {
+      "counts": [
+        1,
+        2,
+        2,
+        3,
+        3,
+        3,
+        3,
+        4,
+        4,
+        4,
+        4,
+        4,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5
+      ],
+      "levelPerStage": 1.3,
+      "statBase": 24,
+      "statPerLevel": 2.3,
+      "statCurveMul": 0.6,
+      "statCurveExp": 1.6,
+      "troopsBase": 110,
+      "troopsPerStage": 60,
+      "troopsCurveMul": 4,
+      "troopsCurveExp": 1.8,
+      "bossStatMul": 1.25,
+      "bossTroopMul": 1.4,
+      "tierEveryStages": 5,
+      "eliteFromStage": 7,
+      "eliteSkill": "sonTacDao"
+    },
+    "rewards": {
+      "expBase": 45,
+      "expPerStage": 32,
+      "luongBase": 250,
+      "luongPerStage": 180,
+      "goBase": 150,
+      "goPerStage": 120,
+      "bacBase": 180,
+      "bacPerStage": 130,
+      "repeatExpPct": 0.4,
+      "repeatResPct": 0.35,
+      "firstPillsBase": 2,
+      "firstPillsEvery": 3,
+      "firstNguyenBao": 10,
+      "bossNguyenBaoBase": 40,
+      "bossNguyenBaoPerStage": 4,
+      "bossHuyenThietBase": 6,
+      "bossBiKipEvery": 5,
+      "sweepLuongBase": 80,
+      "sweepLuongPerStage": 40,
+      "sweepPillChance": 0.5
+    },
+    "equip": {
+      "statPerTier": 8,
+      "enhancePct": 0.1,
+      "maxEnhancePerLoRen": 2,
+      "tierEveryLoRen": 4,
+      "forgeSatBase": 200,
+      "forgeBacBase": 150,
+      "forgeGrowth": 2.2,
+      "forgeHuyenThietPerTier": 3,
+      "enhanceSatBase": 60,
+      "enhanceBacBase": 80,
+      "enhanceGrowth": 1.25,
+      "enhanceHuyenThietFrom": 5,
+      "sellRatio": 0.3
+    },
+    "releaseExpRefund": 0.5,
+    "skillCostBac": {
+      "base": 500,
+      "exp": 1.5
+    },
+    "skillHeroLevelStep": 5
+  },
+  "deploySlots": [
+    {
+      "level": 1,
+      "slots": 2
+    },
+    {
+      "level": 3,
+      "slots": 3
+    },
+    {
+      "level": 8,
+      "slots": 4
+    },
+    {
+      "level": 14,
+      "slots": 5
+    }
+  ],
+  "factionBonus": [
+    {
+      "count": 3,
+      "bonus": 0.08
+    },
+    {
+      "count": 4,
+      "bonus": 0.12
+    },
+    {
+      "count": 5,
+      "bonus": 0.18
+    }
+  ],
+  "resources": {
+    "luong": {
+      "name": "Lương thực",
+      "short": "Lương",
+      "desc": "Nuôi đệ tử. Tốn khi bổ sung quân."
+    },
+    "go": {
+      "name": "Gỗ",
+      "short": "Gỗ",
+      "desc": "Xây và nâng cấp công trình."
+    },
+    "sat": {
+      "name": "Sắt",
+      "short": "Sắt",
+      "desc": "Rèn binh khí, nâng cấp công trình cao."
+    },
+    "bac": {
+      "name": "Bạc",
+      "short": "Bạc",
+      "desc": "Tiền tệ chính: chiêu mộ, rèn, nghiên cứu."
+    },
+    "nguyenbao": {
+      "name": "Nguyên bảo",
+      "short": "N.Bảo",
+      "desc": "Tiền hiếm. Hoàn thành ngay, làm mới tửu lâu."
+    }
+  },
+  "items": {
+    "tieuHoanDan": {
+      "name": "Tiểu Hoàn Đan",
+      "desc": "+150 kinh nghiệm hiệp khách.",
+      "exp": 150
+    },
+    "daiHoanDan": {
+      "name": "Đại Hoàn Đan",
+      "desc": "+1500 kinh nghiệm hiệp khách.",
+      "exp": 1500
+    },
+    "huyenThiet": {
+      "name": "Huyền Thiết",
+      "desc": "Nguyên liệu rèn và cường hóa binh khí."
+    },
+    "biKip": {
+      "name": "Bí kíp tàn trang",
+      "desc": "Nâng cấp tuyệt kỹ của hiệp khách."
+    }
+  },
+  "buildings": {
+    "chinhDien": {
+      "name": "Chính Điện",
+      "desc": "Trung tâm môn phái. Cấp các công trình khác không vượt quá cấp Chính Điện. Cấp Chính Điện không vượt quá cấp Chưởng Môn.",
+      "roof": "#b8323a",
+      "cost": {
+        "go": 300,
+        "sat": 120,
+        "bac": 200
+      },
+      "costGrowth": 1.55,
+      "timeBase": 20,
+      "timeGrowth": 1.42,
+      "unlockLevel": 1,
+      "startLevel": 2
+    },
+    "ruong": {
+      "name": "Ruộng Lúa",
+      "desc": "Sinh lương thực theo thời gian.",
+      "roof": "#c9a43b",
+      "cost": {
+        "go": 80,
+        "bac": 40
+      },
+      "costGrowth": 1.48,
+      "timeBase": 8,
+      "timeGrowth": 1.38,
+      "unlockLevel": 1,
+      "startLevel": 1,
+      "produces": "luong",
+      "prodBase": 320,
+      "prodGrowth": 1.1
+    },
+    "xuongGo": {
+      "name": "Rừng Trúc",
+      "desc": "Đốn trúc lấy gỗ.",
+      "roof": "#4f8a3c",
+      "cost": {
+        "luong": 80,
+        "bac": 40
+      },
+      "costGrowth": 1.48,
+      "timeBase": 8,
+      "timeGrowth": 1.38,
+      "unlockLevel": 1,
+      "startLevel": 1,
+      "produces": "go",
+      "prodBase": 260,
+      "prodGrowth": 1.1
+    },
+    "moSat": {
+      "name": "Mỏ Sắt",
+      "desc": "Khai khoáng lấy sắt.",
+      "roof": "#6d7480",
+      "cost": {
+        "luong": 120,
+        "go": 120,
+        "bac": 60
+      },
+      "costGrowth": 1.5,
+      "timeBase": 12,
+      "timeGrowth": 1.4,
+      "unlockLevel": 2,
+      "startLevel": 0,
+      "produces": "sat",
+      "prodBase": 150,
+      "prodGrowth": 1.1
+    },
+    "tienTrang": {
+      "name": "Tiền Trang",
+      "desc": "Buôn bán, thu bạc.",
+      "roof": "#d9d4c7",
+      "cost": {
+        "luong": 100,
+        "go": 100
+      },
+      "costGrowth": 1.5,
+      "timeBase": 10,
+      "timeGrowth": 1.4,
+      "unlockLevel": 1,
+      "startLevel": 1,
+      "produces": "bac",
+      "prodBase": 200,
+      "prodGrowth": 1.1
+    },
+    "khoHang": {
+      "name": "Kho Hàng",
+      "desc": "Tăng sức chứa mọi tài nguyên.",
+      "roof": "#8a5a33",
+      "cost": {
+        "luong": 150,
+        "go": 200,
+        "bac": 80
+      },
+      "costGrowth": 1.5,
+      "timeBase": 12,
+      "timeGrowth": 1.4,
+      "unlockLevel": 1,
+      "startLevel": 1,
+      "storageBase": 5000,
+      "storageGrowth": 1.42
+    },
+    "luyenVo": {
+      "name": "Luyện Võ Trường",
+      "desc": "Tăng quân số tối đa của mỗi hiệp khách và mở nghiên cứu bậc binh chủng.",
+      "roof": "#a0522d",
+      "cost": {
+        "luong": 250,
+        "go": 250,
+        "sat": 100,
+        "bac": 150
+      },
+      "costGrowth": 1.52,
+      "timeBase": 15,
+      "timeGrowth": 1.42,
+      "unlockLevel": 3,
+      "startLevel": 0
+    },
+    "tuuLau": {
+      "name": "Tửu Lâu",
+      "desc": "Chiêu mộ hiệp khách. Cấp càng cao càng dễ gặp cao thủ, chứa được nhiều hiệp khách hơn.",
+      "roof": "#c0602f",
+      "cost": {
+        "luong": 200,
+        "go": 250,
+        "bac": 200
+      },
+      "costGrowth": 1.55,
+      "timeBase": 15,
+      "timeGrowth": 1.42,
+      "unlockLevel": 2,
+      "startLevel": 0
+    },
+    "loRen": {
+      "name": "Lò Rèn",
+      "desc": "Rèn và cường hóa binh khí, y phục, ngọc bội.",
+      "roof": "#3c3f48",
+      "cost": {
+        "go": 300,
+        "sat": 250,
+        "bac": 200
+      },
+      "costGrowth": 1.55,
+      "timeBase": 18,
+      "timeGrowth": 1.42,
+      "unlockLevel": 5,
+      "startLevel": 0
+    },
+    "tangKinh": {
+      "name": "Tàng Kinh Các",
+      "desc": "Lưu giữ bí kíp. Mỗi cấp nâng giới hạn cấp tuyệt kỹ thêm 1.",
+      "roof": "#3b6aa0",
+      "cost": {
+        "go": 400,
+        "sat": 200,
+        "bac": 400
+      },
+      "costGrowth": 1.58,
+      "timeBase": 20,
+      "timeGrowth": 1.44,
+      "unlockLevel": 6,
+      "startLevel": 0
+    }
+  },
+  "buildingOrder": [
+    "chinhDien",
+    "ruong",
+    "xuongGo",
+    "moSat",
+    "tienTrang",
+    "khoHang",
+    "luyenVo",
+    "tuuLau",
+    "loRen",
+    "tangKinh"
+  ],
+  "factions": {
+    "chinh": {
+      "name": "Chính Phái",
+      "color": "#e8c35a"
+    },
+    "ta": {
+      "name": "Tà Phái",
+      "color": "#c4455a"
+    },
+    "an": {
+      "name": "Ẩn Thế",
+      "color": "#6fb3c9"
+    }
+  },
+  "qualities": {
+    "1": {
+      "name": "Vô Danh",
+      "color": "#9aa0a6",
+      "recruitCost": 200,
+      "weightBase": 40,
+      "weightPerLevel": -3,
+      "weightMin": 5
+    },
+    "2": {
+      "name": "Thiếu Hiệp",
+      "color": "#6cc46c",
+      "recruitCost": 600,
+      "weightBase": 40,
+      "weightPerLevel": 0,
+      "weightMin": 0
+    },
+    "3": {
+      "name": "Đại Hiệp",
+      "color": "#5aa0f0",
+      "recruitCost": 2000,
+      "weightBase": 12,
+      "weightPerLevel": 2,
+      "weightMin": 0
+    },
+    "4": {
+      "name": "Tông Sư",
+      "color": "#b67cf0",
+      "recruitCost": 6000,
+      "weightBase": -4,
+      "weightPerLevel": 1.2,
+      "weightMin": 0
+    },
+    "5": {
+      "name": "Võ Thánh",
+      "color": "#f0a040",
+      "recruitCost": 15000,
+      "weightBase": -3.5,
+      "weightPerLevel": 0.4,
+      "weightMin": 0
+    }
+  },
+  "heroes": {
+    "laTieu": {
+      "name": "La Tiểu Cẩu",
+      "q": 1,
+      "faction": "chinh",
+      "school": "quyen",
+      "base": [
+        34,
+        30,
+        20
+      ],
+      "growth": [
+        1.6,
+        1.4,
+        1
+      ],
+      "skill": "thietDau",
+      "palette": [
+        "#8b6b4a",
+        "#5e4630",
+        "#2b1d12",
+        "#c9b28a"
+      ],
+      "bio": "Tiểu nhị quán trọ, học lỏm được vài đường quyền."
+    },
+    "vuongNhi": {
+      "name": "Vương Nhị Nương",
+      "q": 1,
+      "faction": "an",
+      "school": "amkhi",
+      "base": [
+        26,
+        24,
+        32
+      ],
+      "growth": [
+        1.1,
+        1.2,
+        1.6
+      ],
+      "skill": "phiTieu",
+      "palette": [
+        "#6d5a7a",
+        "#4a3c55",
+        "#1a1420",
+        "#d0b0d8"
+      ],
+      "bio": "Bà chủ tiệm thuốc, ra tay bằng kim bạc."
+    },
+    "lyThanhPhong": {
+      "name": "Lý Thanh Phong",
+      "q": 2,
+      "faction": "chinh",
+      "school": "kiem",
+      "base": [
+        36,
+        44,
+        30
+      ],
+      "growth": [
+        1.8,
+        2.3,
+        1.5
+      ],
+      "skill": "luuVanKiem",
+      "palette": [
+        "#3d6fb0",
+        "#264a7a",
+        "#1b1b24",
+        "#e8eef8"
+      ],
+      "bio": "Đệ tử út phái Thanh Sơn, kiếm pháp nhanh như gió."
+    },
+    "duongTieuMai": {
+      "name": "Đường Tiểu Mai",
+      "q": 2,
+      "faction": "an",
+      "school": "amkhi",
+      "base": [
+        30,
+        30,
+        46
+      ],
+      "growth": [
+        1.5,
+        1.5,
+        2.4
+      ],
+      "skill": "maiHoaCham",
+      "palette": [
+        "#c25a7c",
+        "#8a3a55",
+        "#2a1a20",
+        "#f6d0dc"
+      ],
+      "bio": "Con gái nhà làm ám khí, tính khí thất thường."
+    },
+    "manhThietNguu": {
+      "name": "Mạnh Thiết Ngưu",
+      "q": 2,
+      "faction": "chinh",
+      "school": "quyen",
+      "base": [
+        48,
+        38,
+        22
+      ],
+      "growth": [
+        2.5,
+        1.9,
+        1.1
+      ],
+      "skill": "thietDau",
+      "palette": [
+        "#b07a3d",
+        "#7a5226",
+        "#1c140c",
+        "#f0d8a8"
+      ],
+      "bio": "Thợ rèn khỏe như trâu, một quyền vỡ đá."
+    },
+    "hoTamLang": {
+      "name": "Hồ Tam Lang",
+      "q": 2,
+      "faction": "ta",
+      "school": "thuong",
+      "base": [
+        40,
+        42,
+        26
+      ],
+      "growth": [
+        2,
+        2.2,
+        1.3
+      ],
+      "skill": "hoanhTaoThienQuan",
+      "palette": [
+        "#5a4a3a",
+        "#3a2e24",
+        "#120c08",
+        "#c84a3a"
+      ],
+      "bio": "Thổ phỉ Hắc Phong Trại, cây thương không rời tay."
+    },
+    "toVanHac": {
+      "name": "Tô Vân Hạc",
+      "q": 3,
+      "faction": "an",
+      "school": "kiem",
+      "base": [
+        42,
+        54,
+        44
+      ],
+      "growth": [
+        2.1,
+        2.9,
+        2.2
+      ],
+      "skill": "hacMinhCuuThien",
+      "palette": [
+        "#e8e4dc",
+        "#b8b0a4",
+        "#2a2a30",
+        "#3a8a9a"
+      ],
+      "bio": "Kiếm khách áo trắng, ẩn cư bên hồ Lạc Nhạn."
+    },
+    "lacBangNhi": {
+      "name": "Lạc Băng Nhi",
+      "q": 3,
+      "faction": "chinh",
+      "school": "amkhi",
+      "base": [
+        36,
+        34,
+        58
+      ],
+      "growth": [
+        1.8,
+        1.7,
+        3
+      ],
+      "skill": "hanBangTieu",
+      "palette": [
+        "#7ec8e3",
+        "#4a90b0",
+        "#e8f4f8",
+        "#ffffff"
+      ],
+      "bio": "Nữ đệ tử Tuyết Lĩnh, ám khí lạnh như băng."
+    },
+    "tanBaSon": {
+      "name": "Tần Bá Sơn",
+      "q": 3,
+      "faction": "ta",
+      "school": "quyen",
+      "base": [
+        60,
+        48,
+        30
+      ],
+      "growth": [
+        3,
+        2.4,
+        1.5
+      ],
+      "skill": "baSonQuyen",
+      "palette": [
+        "#7a2a2a",
+        "#521a1a",
+        "#0c0606",
+        "#e0a040"
+      ],
+      "bio": "Trại chủ một vùng, quyền phong như núi đổ."
+    },
+    "chuHanGiang": {
+      "name": "Chu Hàn Giang",
+      "q": 3,
+      "faction": "chinh",
+      "school": "thuong",
+      "base": [
+        50,
+        52,
+        36
+      ],
+      "growth": [
+        2.5,
+        2.6,
+        1.8
+      ],
+      "skill": "giangHaiThuong",
+      "palette": [
+        "#2f6b4f",
+        "#1f4a36",
+        "#101814",
+        "#d8e8c0"
+      ],
+      "bio": "Tổng tiêu đầu tiêu cục Hàn Giang."
+    },
+    "lieuNhuYen": {
+      "name": "Liễu Như Yên",
+      "q": 3,
+      "faction": "ta",
+      "school": "amkhi",
+      "base": [
+        34,
+        40,
+        56
+      ],
+      "growth": [
+        1.7,
+        2,
+        2.9
+      ],
+      "skill": "yenVuDoc",
+      "palette": [
+        "#4a2a5a",
+        "#30183c",
+        "#0e0812",
+        "#9ad04a"
+      ],
+      "bio": "Mỹ nhân dùng độc, cười một tiếng là có người ngã."
+    },
+    "bachVoNgan": {
+      "name": "Bạch Vô Ngân",
+      "q": 4,
+      "faction": "an",
+      "school": "kiem",
+      "base": [
+        52,
+        68,
+        54
+      ],
+      "growth": [
+        2.6,
+        3.6,
+        2.7
+      ],
+      "skill": "vongTinhKiem",
+      "palette": [
+        "#f4f4f8",
+        "#c8c8d4",
+        "#d0d0d8",
+        "#6a6af0"
+      ],
+      "bio": "Kiếm khách tóc bạc, nghe nói chưa từng rút kiếm hai lần."
+    },
+    "hacSatThien": {
+      "name": "Hắc Sát Thiên",
+      "q": 4,
+      "faction": "ta",
+      "school": "quyen",
+      "base": [
+        74,
+        60,
+        40
+      ],
+      "growth": [
+        3.7,
+        3,
+        2
+      ],
+      "skill": "hacSatChuong",
+      "palette": [
+        "#20202a",
+        "#101016",
+        "#05050a",
+        "#d03030"
+      ],
+      "bio": "Giáo chủ một tà giáo, chưởng lực âm hàn."
+    },
+    "phongLinhTu": {
+      "name": "Phong Linh Tử",
+      "q": 4,
+      "faction": "an",
+      "school": "amkhi",
+      "base": [
+        46,
+        46,
+        72
+      ],
+      "growth": [
+        2.3,
+        2.3,
+        3.6
+      ],
+      "skill": "phongLinhVanTieu",
+      "palette": [
+        "#8ac8a0",
+        "#5a9a70",
+        "#203028",
+        "#f0f0c0"
+      ],
+      "bio": "Đạo sĩ vân du, tay áo giấu ngàn phi tiêu."
+    },
+    "taKinhThuong": {
+      "name": "Tạ Kình Thương",
+      "q": 4,
+      "faction": "chinh",
+      "school": "thuong",
+      "base": [
+        64,
+        66,
+        46
+      ],
+      "growth": [
+        3.2,
+        3.3,
+        2.3
+      ],
+      "skill": "kinhLoiThuong",
+      "palette": [
+        "#c8a040",
+        "#8a6a20",
+        "#201808",
+        "#f8f0d0"
+      ],
+      "bio": "Đại tướng quân về ở ẩn, thương pháp như sấm."
+    },
+    "thaiHuChanNhan": {
+      "name": "Thái Hư Chân Nhân",
+      "q": 5,
+      "faction": "an",
+      "school": "kiem",
+      "base": [
+        66,
+        84,
+        76
+      ],
+      "growth": [
+        3.3,
+        4.4,
+        3.8
+      ],
+      "skill": "thaiHuKiemY",
+      "palette": [
+        "#5a5ab0",
+        "#3a3a80",
+        "#e8e8f0",
+        "#f0d060"
+      ],
+      "bio": "Đạo nhân trăm tuổi, kiếm ý vô hình."
+    },
+    "kimCuongDaiSu": {
+      "name": "Kim Cương Đại Sư",
+      "q": 5,
+      "faction": "chinh",
+      "school": "quyen",
+      "base": [
+        92,
+        72,
+        58
+      ],
+      "growth": [
+        4.6,
+        3.6,
+        2.9
+      ],
+      "skill": "kimCuongBatHoai",
+      "palette": [
+        "#e0a030",
+        "#b07818",
+        "#e0a030",
+        "#f8e8b0"
+      ],
+      "bio": "Phương trượng chùa Thạch Lâm, thân như kim cương."
+    },
+    "huyetMaLaoTo": {
+      "name": "Huyết Ma Lão Tổ",
+      "q": 5,
+      "faction": "ta",
+      "school": "amkhi",
+      "base": [
+        62,
+        64,
+        90
+      ],
+      "growth": [
+        3.1,
+        3.2,
+        4.6
+      ],
+      "skill": "huyetMaDocVu",
+      "palette": [
+        "#8a1020",
+        "#5a0814",
+        "#c0c0c0",
+        "#40ff60"
+      ],
+      "bio": "Ma đầu sống sót qua ba lần vây quét của võ lâm."
+    },
+    "loiChan": {
+      "name": "Lôi Chấn",
+      "q": 5,
+      "faction": "ta",
+      "school": "thuong",
+      "base": [
+        80,
+        86,
+        56
+      ],
+      "growth": [
+        4,
+        4.4,
+        2.8
+      ],
+      "skill": "loiDinhVanQuan",
+      "palette": [
+        "#303848",
+        "#1c2230",
+        "#0a0c10",
+        "#60c0ff"
+      ],
+      "bio": "Thương thần phương Bắc, mỗi đòn kèm tiếng sấm."
+    }
+  },
+  "starterHeroes": [
+    "lyThanhPhong",
+    "manhThietNguu"
+  ],
+  "skills": {
+    "thietDau": {
+      "name": "Thiết Đầu Công",
+      "desc": "Húc một mục tiêu, 30% gây choáng 1 lượt.",
+      "target": "single",
+      "mult": 1.5,
+      "stat": "voLuc",
+      "effects": [
+        {
+          "type": "stun",
+          "chance": 0.3,
+          "turns": 1
+        }
+      ]
+    },
+    "phiTieu": {
+      "name": "Liên Hoàn Phi Tiêu",
+      "desc": "Ném tiêu vào 2 mục tiêu ngẫu nhiên.",
+      "target": "random2",
+      "mult": 0.9,
+      "stat": "ngoTinh",
+      "effects": []
+    },
+    "luuVanKiem": {
+      "name": "Lưu Vân Kiếm",
+      "desc": "Chém một mục tiêu, tăng 15% công bản thân 2 lượt.",
+      "target": "single",
+      "mult": 1.7,
+      "stat": "voLuc",
+      "effects": [
+        {
+          "type": "buffAtk",
+          "pct": 0.15,
+          "turns": 2,
+          "self": true
+        }
+      ]
+    },
+    "maiHoaCham": {
+      "name": "Mai Hoa Châm",
+      "desc": "Bắn cả hàng sau, gây trúng độc 2 lượt.",
+      "target": "back",
+      "mult": 0.9,
+      "stat": "ngoTinh",
+      "effects": [
+        {
+          "type": "poison",
+          "pct": 0.25,
+          "turns": 2
+        }
+      ]
+    },
+    "hoanhTaoThienQuan": {
+      "name": "Hoành Tảo Thiên Quân",
+      "desc": "Quét cả hàng trước.",
+      "target": "row",
+      "mult": 1,
+      "stat": "voLuc",
+      "effects": []
+    },
+    "hacMinhCuuThien": {
+      "name": "Hạc Minh Cửu Thiên",
+      "desc": "Một kiếm cực mạnh vào mục tiêu ít quân nhất.",
+      "target": "weakest",
+      "mult": 2.4,
+      "stat": "voLuc",
+      "effects": []
+    },
+    "hanBangTieu": {
+      "name": "Hàn Băng Tiêu",
+      "desc": "Đánh 3 mục tiêu, 25% đóng băng 1 lượt.",
+      "target": "random3",
+      "mult": 0.8,
+      "stat": "ngoTinh",
+      "effects": [
+        {
+          "type": "stun",
+          "chance": 0.25,
+          "turns": 1
+        }
+      ]
+    },
+    "baSonQuyen": {
+      "name": "Bạt Sơn Quyền",
+      "desc": "Đánh hàng trước, giảm 20% phòng 2 lượt.",
+      "target": "row",
+      "mult": 1.1,
+      "stat": "voLuc",
+      "effects": [
+        {
+          "type": "defDown",
+          "pct": 0.2,
+          "turns": 2
+        }
+      ]
+    },
+    "giangHaiThuong": {
+      "name": "Giang Hải Thương",
+      "desc": "Đâm xuyên một mục tiêu, hồi 10% quân đã mất cho bản thân.",
+      "target": "single",
+      "mult": 1.9,
+      "stat": "voLuc",
+      "effects": [
+        {
+          "type": "heal",
+          "pct": 0.1,
+          "self": true
+        }
+      ]
+    },
+    "yenVuDoc": {
+      "name": "Yên Vũ Độc",
+      "desc": "Rải độc toàn bộ địch 3 lượt.",
+      "target": "all",
+      "mult": 0.45,
+      "stat": "ngoTinh",
+      "effects": [
+        {
+          "type": "poison",
+          "pct": 0.35,
+          "turns": 3
+        }
+      ]
+    },
+    "vongTinhKiem": {
+      "name": "Vong Tình Kiếm",
+      "desc": "Chém cả hàng trước, hút 30 khí của mỗi mục tiêu.",
+      "target": "row",
+      "mult": 1.35,
+      "stat": "voLuc",
+      "effects": [
+        {
+          "type": "khiDrain",
+          "amount": 30
+        }
+      ]
+    },
+    "hacSatChuong": {
+      "name": "Hắc Sát Chưởng",
+      "desc": "Đánh toàn bộ địch, giảm 15% công 2 lượt.",
+      "target": "all",
+      "mult": 0.75,
+      "stat": "voLuc",
+      "effects": [
+        {
+          "type": "atkDown",
+          "pct": 0.15,
+          "turns": 2
+        }
+      ]
+    },
+    "phongLinhVanTieu": {
+      "name": "Phong Linh Vạn Tiêu",
+      "desc": "Mưa tiêu toàn bộ địch.",
+      "target": "all",
+      "mult": 0.85,
+      "stat": "ngoTinh",
+      "effects": []
+    },
+    "kinhLoiThuong": {
+      "name": "Kinh Lôi Thương",
+      "desc": "Đánh hàng trước, 35% choáng 1 lượt.",
+      "target": "row",
+      "mult": 1.2,
+      "stat": "voLuc",
+      "effects": [
+        {
+          "type": "stun",
+          "chance": 0.35,
+          "turns": 1
+        }
+      ]
+    },
+    "thaiHuKiemY": {
+      "name": "Thái Hư Kiếm Ý",
+      "desc": "Kiếm ý phủ toàn trận, tăng 20% công cả đội 2 lượt.",
+      "target": "all",
+      "mult": 1,
+      "stat": "voLuc",
+      "effects": [
+        {
+          "type": "teamBuffAtk",
+          "pct": 0.2,
+          "turns": 2
+        }
+      ]
+    },
+    "kimCuongBatHoai": {
+      "name": "Kim Cương Bất Hoại",
+      "desc": "Đánh hàng trước, hồi 15% quân đã mất cho cả đội.",
+      "target": "row",
+      "mult": 1.1,
+      "stat": "canCot",
+      "effects": [
+        {
+          "type": "teamHeal",
+          "pct": 0.15
+        }
+      ]
+    },
+    "huyetMaDocVu": {
+      "name": "Huyết Ma Độc Vũ",
+      "desc": "Độc toàn trận 3 lượt, hút 20 khí mỗi mục tiêu.",
+      "target": "all",
+      "mult": 0.7,
+      "stat": "ngoTinh",
+      "effects": [
+        {
+          "type": "poison",
+          "pct": 0.4,
+          "turns": 3
+        },
+        {
+          "type": "khiDrain",
+          "amount": 20
+        }
+      ]
+    },
+    "loiDinhVanQuan": {
+      "name": "Lôi Đình Vạn Quân",
+      "desc": "Sấm sét toàn trận, 25% choáng 1 lượt.",
+      "target": "all",
+      "mult": 1,
+      "stat": "voLuc",
+      "effects": [
+        {
+          "type": "stun",
+          "chance": 0.25,
+          "turns": 1
+        }
+      ]
+    },
+    "sonTacDao": {
+      "name": "Loạn Đao",
+      "desc": "Chém loạn 2 mục tiêu.",
+      "target": "random2",
+      "mult": 1,
+      "stat": "voLuc",
+      "effects": []
+    },
+    "docChuong": {
+      "name": "Độc Chưởng",
+      "desc": "Một chưởng độc.",
+      "target": "single",
+      "mult": 1.4,
+      "stat": "ngoTinh",
+      "effects": [
+        {
+          "type": "poison",
+          "pct": 0.3,
+          "turns": 2
+        }
+      ]
+    }
+  },
+  "troopTypes": {
+    "quyen": {
+      "name": "Quyền",
+      "desc": "Võ tăng tay không. Máu dày, chậm. Khắc Thương.",
+      "dmgType": "ngoai",
+      "range": "melee",
+      "hp": 12,
+      "atk": 0.9,
+      "defNgoai": 1.2,
+      "defDoc": 1,
+      "speed": 7,
+      "beats": [
+        "thuong"
+      ],
+      "tiers": [
+        "Hương Dũng",
+        "Thiết Quyền Tăng",
+        "Kim Cương Võ Tăng",
+        "La Hán Trận",
+        "Bất Động Minh Vương"
+      ]
+    },
+    "thuong": {
+      "name": "Thương",
+      "desc": "Trường côn, trường thương. Cân bằng. Khắc Kiếm.",
+      "dmgType": "ngoai",
+      "range": "melee",
+      "hp": 10,
+      "atk": 1,
+      "defNgoai": 1.05,
+      "defDoc": 0.95,
+      "speed": 9,
+      "beats": [
+        "kiem"
+      ],
+      "tiers": [
+        "Trường Côn Binh",
+        "Thiết Thương Vệ",
+        "Bá Vương Thương",
+        "Liệt Hỏa Thương Trận",
+        "Phá Quân Vệ"
+      ]
+    },
+    "kiem": {
+      "name": "Kiếm",
+      "desc": "Kiếm khách nhanh nhẹn, ra đòn trước. Khắc Quyền và Ám Khí.",
+      "dmgType": "ngoai",
+      "range": "melee",
+      "hp": 9,
+      "atk": 1.12,
+      "defNgoai": 0.9,
+      "defDoc": 0.9,
+      "speed": 12,
+      "beats": [
+        "quyen",
+        "amkhi"
+      ],
+      "tiers": [
+        "Kiếm Đồng",
+        "Kiếm Khách",
+        "Lưu Vân Kiếm Sĩ",
+        "Thất Tinh Kiếm Trận",
+        "Kiếm Tiên Vệ"
+      ]
+    },
+    "amkhi": {
+      "name": "Ám Khí",
+      "desc": "Phi tiêu, độc châm. Đánh thẳng hàng sau, gây sát thương độc. Máu mỏng.",
+      "dmgType": "doc",
+      "range": "ranged",
+      "hp": 7,
+      "atk": 1.05,
+      "defNgoai": 0.75,
+      "defDoc": 1.2,
+      "speed": 11,
+      "beats": [],
+      "tiers": [
+        "Phi Tiêu Thủ",
+        "Ám Tiễn Khách",
+        "Độc Châm Môn Đồ",
+        "Vạn Độc Thủ",
+        "U Linh Sát Thủ"
+      ]
+    }
+  },
+  "troopOrder": [
+    "quyen",
+    "thuong",
+    "kiem",
+    "amkhi"
+  ],
+  "tiers": [
+    {
+      "mult": 1,
+      "reqLuyenVo": 0,
+      "cost": {}
+    },
+    {
+      "mult": 1.25,
+      "reqLuyenVo": 1,
+      "cost": {
+        "luong": 800,
+        "sat": 300,
+        "bac": 600
+      }
+    },
+    {
+      "mult": 1.55,
+      "reqLuyenVo": 5,
+      "cost": {
+        "luong": 4000,
+        "sat": 1800,
+        "bac": 3000
+      }
+    },
+    {
+      "mult": 1.9,
+      "reqLuyenVo": 10,
+      "cost": {
+        "luong": 15000,
+        "sat": 7000,
+        "bac": 12000
+      }
+    },
+    {
+      "mult": 2.3,
+      "reqLuyenVo": 15,
+      "cost": {
+        "luong": 50000,
+        "sat": 25000,
+        "bac": 40000
+      }
+    }
+  ],
+  "chapters": [
+    {
+      "id": 1,
+      "name": "Trấn Thanh Thủy",
+      "reqLevel": 1,
+      "desc": "Sơn tặc kéo về quấy nhiễu trấn nhỏ dưới chân núi.",
+      "enemyNames": [
+        "Sơn Tặc",
+        "Lâu La",
+        "Đầu Mục"
+      ],
+      "boss": {
+        "name": "Độc Nhãn Hổ",
+        "type": "thuong",
+        "skill": "sonTacDao"
+      },
+      "palette": [
+        "#6a5a40",
+        "#4a3e2c",
+        "#1a140c",
+        "#a04030"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Rừng Hắc Phong",
+      "reqLevel": 5,
+      "desc": "Hắc Phong Trại chiếm rừng, cướp tiêu xa.",
+      "enemyNames": [
+        "Lâu La Hắc Phong",
+        "Đao Phỉ",
+        "Cung Thủ Rừng"
+      ],
+      "boss": {
+        "name": "Hắc Phong Trại Chủ",
+        "type": "quyen",
+        "skill": "sonTacDao"
+      },
+      "palette": [
+        "#2a3a2a",
+        "#1a261a",
+        "#0a100a",
+        "#60a040"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Bến Đò Lạc Nhạn",
+      "reqLevel": 10,
+      "desc": "Thủy khấu và Độc Môn tranh giành bến đò.",
+      "enemyNames": [
+        "Thủy Khấu",
+        "Độc Môn Đồ",
+        "Sát Thủ Áo Đen"
+      ],
+      "boss": {
+        "name": "Độc Môn Hộ Pháp",
+        "type": "amkhi",
+        "skill": "docChuong"
+      },
+      "palette": [
+        "#2a3a5a",
+        "#1a263c",
+        "#0a0e18",
+        "#40c0a0"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Núi Thiên Kiếm",
+      "reqLevel": 15,
+      "desc": "Phản đồ kiếm phái chiếm đỉnh núi, thách đấu võ lâm.",
+      "enemyNames": [
+        "Kiếm Đồ Phản Môn",
+        "Thủ Sơn Kiếm Sĩ",
+        "Trưởng Lão Phản Đồ"
+      ],
+      "boss": {
+        "name": "Thiên Kiếm Phản Đồ",
+        "type": "kiem",
+        "skill": "luuVanKiem"
+      },
+      "palette": [
+        "#5a5a6a",
+        "#3a3a48",
+        "#101014",
+        "#e0e0f0"
+      ]
+    }
+  ],
+  "stagesPerChapter": 5,
+  "equipSlots": {
+    "weapon": {
+      "name": "Binh khí",
+      "stat": "voLuc",
+      "tierNames": [
+        "Thiết Kiếm",
+        "Thanh Cương Kiếm",
+        "Hàn Thiết Đao",
+        "Huyền Thiết Trọng Kiếm",
+        "Thất Tinh Bảo Kiếm"
+      ]
+    },
+    "armor": {
+      "name": "Y phục",
+      "stat": "canCot",
+      "tierNames": [
+        "Áo Vải Thô",
+        "Giáp Da",
+        "Nhuyễn Giáp",
+        "Kim Ti Giáp",
+        "Thiên Tằm Bảo Y"
+      ]
+    },
+    "acc": {
+      "name": "Ngọc bội",
+      "stat": "ngoTinh",
+      "tierNames": [
+        "Ngọc Bội Đá",
+        "Bạch Ngọc Bội",
+        "Phỉ Thúy Bội",
+        "Huyết Ngọc Bội",
+        "Thông Linh Bảo Ngọc"
+      ]
+    }
+  },
+  "equipQualities": [
+    {
+      "name": "Thường",
+      "color": "#c8c8c8",
+      "mult": 1,
+      "weight": 50
+    },
+    {
+      "name": "Tốt",
+      "color": "#6cc46c",
+      "mult": 1.3,
+      "weight": 32
+    },
+    {
+      "name": "Hiếm",
+      "color": "#5aa0f0",
+      "mult": 1.7,
+      "weight": 14
+    },
+    {
+      "name": "Quý",
+      "color": "#b67cf0",
+      "mult": 2.2,
+      "weight": 4
+    }
+  ],
+  "quests": [
+    {
+      "id": "q1",
+      "name": "Khai hoang",
+      "desc": "Nâng Ruộng Lúa lên cấp 2.",
+      "cond": {
+        "type": "building",
+        "value": 2,
+        "target": "ruong"
+      },
+      "reward": {
+        "luong": 500,
+        "go": 300
+      }
+    },
+    {
+      "id": "q2",
+      "name": "Ra tay trừ bạo",
+      "desc": "Vượt ải 1-1.",
+      "cond": {
+        "type": "stage",
+        "value": 1,
+        "target": "1-1"
+      },
+      "reward": {
+        "bac": 400,
+        "tieuHoanDan": 3
+      }
+    },
+    {
+      "id": "q3",
+      "name": "Tích trúc",
+      "desc": "Nâng Rừng Trúc lên cấp 2.",
+      "cond": {
+        "type": "building",
+        "value": 2,
+        "target": "xuongGo"
+      },
+      "reward": {
+        "luong": 300,
+        "go": 500
+      }
+    },
+    {
+      "id": "q4",
+      "name": "Dẹp yên đầu trấn",
+      "desc": "Vượt ải 1-3.",
+      "cond": {
+        "type": "stage",
+        "value": 1,
+        "target": "1-3"
+      },
+      "reward": {
+        "bac": 600,
+        "nguyenbao": 30
+      }
+    },
+    {
+      "id": "q5",
+      "name": "Mở rộng chính điện",
+      "desc": "Nâng Chính Điện lên cấp 3.",
+      "cond": {
+        "type": "building",
+        "value": 3,
+        "target": "chinhDien"
+      },
+      "reward": {
+        "go": 1000,
+        "sat": 400
+      }
+    },
+    {
+      "id": "q6",
+      "name": "Chiêu hiền đãi sĩ",
+      "desc": "Có 3 hiệp khách.",
+      "cond": {
+        "type": "heroCount",
+        "value": 3
+      },
+      "reward": {
+        "bac": 500,
+        "tieuHoanDan": 5
+      }
+    },
+    {
+      "id": "q7",
+      "name": "Trừ Độc Nhãn Hổ",
+      "desc": "Vượt ải trùm 1-5.",
+      "cond": {
+        "type": "stage",
+        "value": 1,
+        "target": "1-5"
+      },
+      "reward": {
+        "nguyenbao": 50,
+        "huyenThiet": 10,
+        "biKip": 2
+      }
+    },
+    {
+      "id": "q8",
+      "name": "Luyện binh",
+      "desc": "Xây Luyện Võ Trường cấp 1.",
+      "cond": {
+        "type": "building",
+        "value": 1,
+        "target": "luyenVo"
+      },
+      "reward": {
+        "luong": 1500,
+        "sat": 600
+      }
+    },
+    {
+      "id": "q9",
+      "name": "Đệ tử tinh nhuệ",
+      "desc": "Nghiên cứu bậc 2 cho một hệ đệ tử.",
+      "cond": {
+        "type": "tier",
+        "value": 2
+      },
+      "reward": {
+        "bac": 1500,
+        "tieuHoanDan": 5
+      }
+    },
+    {
+      "id": "q10",
+      "name": "Danh chấn một vùng",
+      "desc": "Đạt cấp chưởng môn 5.",
+      "cond": {
+        "type": "playerLevel",
+        "value": 5
+      },
+      "reward": {
+        "nguyenbao": 60,
+        "daiHoanDan": 1
+      }
+    },
+    {
+      "id": "q11",
+      "name": "Tiến vào Hắc Phong",
+      "desc": "Vượt ải 2-2.",
+      "cond": {
+        "type": "stage",
+        "value": 1,
+        "target": "2-2"
+      },
+      "reward": {
+        "luong": 2500,
+        "go": 2500
+      }
+    },
+    {
+      "id": "q12",
+      "name": "Đốt lò",
+      "desc": "Xây Lò Rèn cấp 1.",
+      "cond": {
+        "type": "building",
+        "value": 1,
+        "target": "loRen"
+      },
+      "reward": {
+        "sat": 1500,
+        "huyenThiet": 10
+      }
+    },
+    {
+      "id": "q13",
+      "name": "Binh khí đầu tay",
+      "desc": "Rèn 1 trang bị.",
+      "cond": {
+        "type": "forged",
+        "value": 1
+      },
+      "reward": {
+        "bac": 1500,
+        "huyenThiet": 6
+      }
+    },
+    {
+      "id": "q14",
+      "name": "Mài sắc",
+      "desc": "Cường hóa một trang bị lên +3.",
+      "cond": {
+        "type": "enhanced",
+        "value": 3
+      },
+      "reward": {
+        "sat": 2000,
+        "bac": 1500
+      }
+    },
+    {
+      "id": "q15",
+      "name": "Dẹp Hắc Phong Trại",
+      "desc": "Vượt ải trùm 2-5.",
+      "cond": {
+        "type": "stage",
+        "value": 1,
+        "target": "2-5"
+      },
+      "reward": {
+        "nguyenbao": 80,
+        "daiHoanDan": 2,
+        "biKip": 3
+      }
+    },
+    {
+      "id": "q16",
+      "name": "Khổ luyện",
+      "desc": "Có một hiệp khách cấp 12.",
+      "cond": {
+        "type": "heroLevel",
+        "value": 12
+      },
+      "reward": {
+        "bac": 2500,
+        "tieuHoanDan": 10
+      }
+    },
+    {
+      "id": "q17",
+      "name": "Tàng kinh",
+      "desc": "Xây Tàng Kinh Các cấp 1.",
+      "cond": {
+        "type": "building",
+        "value": 1,
+        "target": "tangKinh"
+      },
+      "reward": {
+        "bac": 2000,
+        "biKip": 4
+      }
+    },
+    {
+      "id": "q18",
+      "name": "Tuyệt kỹ tinh thông",
+      "desc": "Nâng một tuyệt kỹ lên cấp 3.",
+      "cond": {
+        "type": "skillLevel",
+        "value": 3
+      },
+      "reward": {
+        "nguyenbao": 60,
+        "daiHoanDan": 1
+      }
+    },
+    {
+      "id": "q19",
+      "name": "Bến đò dậy sóng",
+      "desc": "Vượt ải trùm 3-5.",
+      "cond": {
+        "type": "stage",
+        "value": 1,
+        "target": "3-5"
+      },
+      "reward": {
+        "nguyenbao": 120,
+        "daiHoanDan": 3,
+        "huyenThiet": 20
+      }
+    },
+    {
+      "id": "q20",
+      "name": "Bậc thầy luyện binh",
+      "desc": "Nghiên cứu bậc 3 cho một hệ đệ tử.",
+      "cond": {
+        "type": "tier",
+        "value": 3
+      },
+      "reward": {
+        "luong": 8000,
+        "sat": 4000,
+        "bac": 6000
+      }
+    },
+    {
+      "id": "q21",
+      "name": "Đại hội võ lâm",
+      "desc": "Đạt cấp chưởng môn 15.",
+      "cond": {
+        "type": "playerLevel",
+        "value": 15
+      },
+      "reward": {
+        "nguyenbao": 150,
+        "daiHoanDan": 3
+      }
+    },
+    {
+      "id": "q22",
+      "name": "Đỉnh Thiên Kiếm",
+      "desc": "Vượt ải trùm 4-5.",
+      "cond": {
+        "type": "stage",
+        "value": 1,
+        "target": "4-5"
+      },
+      "reward": {
+        "nguyenbao": 300,
+        "daiHoanDan": 5,
+        "biKip": 6
+      }
+    }
+  ]
+}

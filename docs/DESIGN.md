@@ -46,7 +46,7 @@ Kinh nghiệm chưởng môn ──► mở cấp công trình, số người xu
 - Khắc chế: ×1,3 khi khắc, ×0,8 khi bị khắc. Sở trường đúng hệ: +15% công.
 - Thắng với tổn thất ≤ 25% quân được 3 sao, ≤ 55% được 2 sao.
 
-Tất cả hằng số nằm trong `src/data/balance.js`.
+Tất cả hằng số nằm trong sheet **Cân bằng** của `config/GiangHo.xlsx`.
 
 ## Nhịp độ hiện tại (bot, seed 1)
 

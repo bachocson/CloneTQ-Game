@@ -1,7 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import * as G from '../src/engine/game.js';
-import { BALANCE } from '../src/data/balance.js';
+import * as G from '../core/src/index.js';
+import { loadConfig } from '../tools/load-config.js';
+
+const CFG = loadConfig();
 
 const T0 = Date.UTC(2026, 0, 1);
 const H = 3600 * 1000;
@@ -21,7 +23,7 @@ test('offline quá giới hạn thì chỉ tính tối đa offlineCapHours', () 
   s.buildings.khoHang = 30; // kho rất lớn để không bị chặn
   const before = s.res.go;
   G.tick(s, T0 + 100 * H);
-  const expected = G.productionPerHour(s, 'go') * BALANCE.offlineCapHours;
+  const expected = G.productionPerHour(s, 'go') * CFG.balance.offlineCapHours;
   assert.ok(Math.abs(s.res.go - before - expected) < 1);
 });
 
@@ -50,7 +52,7 @@ test('trận đánh cho cùng kết quả với cùng seed', () => {
 
 test('đội khởi đầu thắng được ải 1-1, nhận thưởng và mở ải 1-2', () => {
   const s = G.newGame(T0, 3);
-  const r = G.fightStage(s, '1-1');
+  const r = G.fightStage(s, '1-1') as G.FightOutcome;
   assert.ok(r.ok);
   assert.ok(r.result.win);
   assert.ok(s.campaign.stars['1-1'] >= 1);
@@ -59,7 +61,7 @@ test('đội khởi đầu thắng được ải 1-1, nhận thưởng và mở 
 });
 
 test('khắc chế: Quyền đánh Thương mạnh hơn Thương đánh Quyền', () => {
-  const mk = (type) => ({ id: 1, slot: 1, name: 'x', stats: { canCot: 50, voLuc: 50, ngoTinh: 50 }, type, tier: 1, troops: 300, maxTroops: 300, skill: null, bonus: 0 });
+  const mk = (type: string): G.BattleUnit => ({ id: 1, slot: 1, name: 'x', stats: { canCot: 50, voLuc: 50, ngoTinh: 50 }, type, tier: 1, troops: 300, maxTroops: 300, skill: null, bonus: 0 });
   const att = G.simulateBattle([mk('quyen')], [mk('thuong')], 1);
   const def = G.simulateBattle([mk('thuong')], [mk('quyen')], 1);
   assert.ok(att.win, 'Quyền thắng Thương');
@@ -106,13 +108,13 @@ test('rèn, cường hóa, mặc trang bị làm tăng chỉ số', () => {
   const h = s.heroes[0];
   const before = G.heroStats(s, h).voLuc;
   const r = G.forge(s, 'weapon', 1);
-  assert.ok(r.ok);
-  G.equip(s, h.uid, r.eq.uid);
+  assert.ok(r.ok && r.eq);
+  G.equip(s, h.uid, r.eq!.uid);
   assert.ok(G.heroStats(s, h).voLuc > before);
   const mid = G.heroStats(s, h).voLuc;
-  assert.ok(G.enhance(s, r.eq.uid).ok);
+  assert.ok(G.enhance(s, r.eq!.uid).ok);
   assert.ok(G.heroStats(s, h).voLuc > mid);
-  assert.equal(G.sell(s, r.eq.uid).ok, false, 'đang mặc thì không bán được');
+  assert.equal(G.sell(s, r.eq!.uid).ok, false, 'đang mặc thì không bán được');
 });
 
 test('nhiệm vụ chỉ nhận được khi hoàn thành, và chỉ một lần', () => {
@@ -129,7 +131,7 @@ test('đội hình giới hạn số người theo cấp chưởng môn', () => 
   s.res.bac = 1e6;
   G.refreshTavern(s, T0, 'free');
   const r = G.recruit(s, s.tavern.candidates[0]);
-  assert.equal(G.setTeamSlot(s, 4, r.hero.uid).ok, false);
+  assert.equal(G.setTeamSlot(s, 4, r.hero!.uid).ok, false);
   s.player.level = 3;
-  assert.ok(G.setTeamSlot(s, 4, r.hero.uid).ok);
+  assert.ok(G.setTeamSlot(s, 4, r.hero!.uid).ok);
 });

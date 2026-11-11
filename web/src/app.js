@@ -1,13 +1,38 @@
 // Giao diện. Toàn bộ luật chơi nằm trong engine; file này chỉ vẽ và gọi hành động.
 
-import * as G from '../engine/game.js';
-import { BUILDINGS, BUILDING_ORDER } from '../data/buildings.js';
-import { HEROES, SKILLS, FACTIONS, QUALITIES } from '../data/heroes.js';
-import { TROOP_TYPES, TROOP_ORDER, TIER_MULT, TIER_RESEARCH } from '../data/troops.js';
-import { RESOURCES, ITEMS } from '../data/resources.js';
-import { CHAPTERS, STAGES_PER_CHAPTER, STAMINA_PER_FIGHT } from '../data/campaign.js';
-import { EQUIP_SLOTS, EQUIP_QUALITIES } from '../data/equipment.js';
-import { BALANCE } from '../data/balance.js';
+import * as G from '../../core/src/index.ts';
+import CONFIG from '../../config/game-config.json';
+
+G.setConfig(CONFIG);
+const C = CONFIG;
+const BAL = C.balance;
+const BUILDINGS = C.buildings;
+const BUILDING_ORDER = C.buildingOrder;
+const HEROES = C.heroes;
+const SKILLS = C.skills;
+const FACTIONS = C.factions;
+const QUALITIES = C.qualities;
+const TROOP_TYPES = C.troopTypes;
+const TROOP_ORDER = C.troopOrder;
+const RESOURCES = C.resources;
+const ITEMS = C.items;
+const CHAPTERS = C.chapters;
+const STAGES_PER_CHAPTER = C.stagesPerChapter;
+const EQUIP_SLOTS = C.equipSlots;
+const EQUIP_QUALITIES = C.equipQualities;
+
+// Lưu trên trình duyệt (riêng cho bản web; Cocos sẽ có cách lưu của nó)
+const storage = {
+  save(state) {
+    try { localStorage.setItem(G.SAVE_KEY, G.serialize(state)); } catch { /* chế độ riêng tư */ }
+  },
+  load(t) {
+    try { const raw = localStorage.getItem(G.SAVE_KEY); return raw ? G.deserialize(raw, t) : null; } catch { return null; }
+  },
+  clear() {
+    try { localStorage.removeItem(G.SAVE_KEY); } catch { /* bỏ qua */ }
+  },
+};
 import { heroSprite, buildingSprite, icon } from './sprites.js';
 
 const now = () => Date.now();
@@ -80,7 +105,7 @@ function toast(msg, bad = false) {
 }
 
 function save() {
-  G.saveToStorage(S);
+  storage.save(S);
 }
 
 function act(fn) {
@@ -94,10 +119,10 @@ function act(fn) {
 
 // ---------- thanh trên ----------
 function renderTop() {
-  const need = BALANCE.playerExpToNext(S.player.level);
+  const need = G.playerExpToNext(S.player.level);
   const cap = G.storageCap(S);
   const st = S.stamina;
-  const stLeft = st.cur < BALANCE.stamina.max ? BALANCE.stamina.regenSeconds - (now() - st.last) / 1000 : 0;
+  const stLeft = st.cur < BAL.stamina.max ? BAL.stamina.regenSeconds - (now() - st.last) / 1000 : 0;
   $('#top').innerHTML = `
     <div class="top-row">
       <div class="lv-badge" title="Cấp chưởng môn">${S.player.level}</div>
@@ -105,7 +130,7 @@ function renderTop() {
         <div class="row"><span class="top-title">Giang Hồ Chưởng Môn</span><span class="spacer"></span><span class="muted num">${fmt(S.player.exp)}/${fmt(need)}</span></div>
         ${bar(S.player.exp, need)}
       </div>
-      <div class="stamina" title="Thể lực">${img(icon('stamina'))}<span class="num">${st.cur}/${BALANCE.stamina.max}</span>${stLeft > 0 ? `<span class="muted num">${fmtTime(stLeft)}</span>` : ''}</div>
+      <div class="stamina" title="Thể lực">${img(icon('stamina'))}<span class="num">${st.cur}/${BAL.stamina.max}</span>${stLeft > 0 ? `<span class="muted num">${fmtTime(stLeft)}</span>` : ''}</div>
     </div>
     <div class="res-row">
       ${['luong', 'go', 'sat', 'bac', 'nguyenbao']
@@ -139,7 +164,7 @@ function viewCity() {
     let effect = '';
     if (b.produces) effect = `${RESOURCES[b.produces].name}: +${fmt(lv ? b.prodBase * lv * Math.pow(b.prodGrowth, lv - 1) : 0)}/giờ → +${fmt(b.prodBase * (lv + 1) * Math.pow(b.prodGrowth, lv))}/giờ`;
     else if (id === 'khoHang') effect = `Sức chứa: ${fmt(G.storageCap(S))}`;
-    else if (id === 'luyenVo') effect = `Quân số tối đa +${lv * 60}`;
+    else if (id === 'luyenVo') effect = `Quân số tối đa +${lv * BAL.troops.perLuyenVo}`;
     else if (id === 'tuuLau') effect = `Chứa ${G.rosterLimit(S)} hiệp khách`;
     else if (id === 'loRen') effect = lv ? `Rèn tối đa bậc ${G.maxForgeTier(S)}, cường hóa tối đa +${G.maxEnhance(S)}` : 'Chưa xây';
     else if (id === 'tangKinh') effect = `Tuyệt kỹ tối đa cấp ${1 + lv}`;
@@ -217,8 +242,7 @@ function viewHeroes() {
   const counts = G.factionCounts(S);
   const factionLine = Object.entries(counts)
     .map(([f, n]) => {
-      let b = 0;
-      for (const [k, v] of Object.entries(BALANCE.factionBonus)) if (n >= Number(k)) b = v;
+      const b = G.factionBonusFor(n);
       return `<span class="chip" style="color:${FACTIONS[f].color}">${FACTIONS[f].name} ×${n}${b ? ` · +${Math.round(b * 100)}% công` : ''}</span>`;
     })
     .join(' ');
@@ -243,7 +267,7 @@ function viewHeroes() {
 
 function viewTavern() {
   if (!G.tavernOpen(S)) return `<div class="panel"><p>Xây <b>Tửu Lâu</b> ở Môn phái (cần cấp chưởng môn ${BUILDINGS.tuuLau.unlockLevel}) để chiêu mộ hiệp khách.</p></div>`;
-  const tv = BALANCE.tavern;
+  const tv = BAL.tavern;
   const freeIn = (S.tavern.nextFree - now()) / 1000;
   const cards = S.tavern.candidates.length
     ? S.tavern.candidates.map((tid) => {
@@ -277,9 +301,9 @@ function viewTrain() {
     TROOP_ORDER.map((type) => {
       const tt = TROOP_TYPES[type];
       const tier = S.troopTiers[type];
-      const m = TIER_MULT[tier - 1];
+      const m = C.tiers[tier - 1].mult;
       const chk = G.researchCheck(S, type);
-      const next = TIER_RESEARCH[tier];
+      const next = C.tiers[tier];
       return `<div class="panel" style="display:grid;grid-template-columns:52px minmax(0,1fr);gap:10px">
         ${img(heroSprite(['#6a5a48', '#4a3e30', '#2a2018', '#c0a070'], type))}
         <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
@@ -299,7 +323,7 @@ function heroSheet(uid) {
   const t = HEROES[h.tid];
   const s = G.heroStats(S, h);
   const max = G.heroMaxTroops(S, h);
-  const need = BALANCE.heroExpToNext(h.level);
+  const need = G.heroExpToNext(h.level);
   const sk = SKILLS[t.skill];
   const skMax = G.skillMaxLevel(S, h);
   const skCost = G.skillUpgradeCost(h);
@@ -340,7 +364,7 @@ function heroSheet(uid) {
       <div class="row"><b>Đệ tử</b><span class="spacer"></span><span class="num">${fmt(h.troops)}/${fmt(max)}</span></div>
       ${bar(h.troops, max, 'blood')}
       <div class="seg" style="margin-top:6px">${TROOP_ORDER.map((ty) => `<button class="${h.troopType === ty ? 'on' : ''}" data-act="troopType" data-uid="${uid}" data-id="${ty}">${TROOP_TYPES[ty].name}${ty === t.school ? '★' : ''}</button>`).join('')}</div>
-      <p class="muted" style="margin-top:4px">${esc(TROOP_TYPES[h.troopType].tiers[S.troopTiers[h.troopType] - 1])} (bậc ${S.troopTiers[h.troopType]}). Đổi hệ sẽ giải tán đệ tử hiện có. ★ là sở trường: +${Math.round(BALANCE.schoolBonus * 100)}% công.</p>
+      <p class="muted" style="margin-top:4px">${esc(TROOP_TYPES[h.troopType].tiers[S.troopTiers[h.troopType] - 1])} (bậc ${S.troopTiers[h.troopType]}). Đổi hệ sẽ giải tán đệ tử hiện có. ★ là sở trường: +${Math.round(BAL.combat.schoolBonus * 100)}% công.</p>
       <div class="row" style="margin-top:6px">${h.troops < max ? costHtml(G.refillCost(S, h, max - h.troops)) : '<span class="muted">Đủ quân</span>'}<span class="spacer"></span><button class="btn small jade" data-act="refillOne" data-uid="${uid}" ${h.troops < max ? '' : 'disabled'}>Bổ sung</button></div>
     </div>
     <div class="panel">
@@ -418,7 +442,7 @@ function viewCampaign() {
   return `<h2>Chinh chiến</h2>
     <div class="panel" style="display:flex;flex-direction:column;gap:6px">
       <div class="row"><span>Lực chiến đội hình</span><span class="spacer"></span><b class="num" style="color:var(--gold)">${fmt(tp)}</b></div>
-      <p class="muted">Mỗi trận thắng tốn ${STAMINA_PER_FIGHT} thể lực, thua tốn 1. Đạt 3 sao để càn quét (tốn thể lực và lương, không mất quân).</p>
+      <p class="muted">Mỗi trận thắng tốn ${BAL.stamina.perWin} thể lực, thua tốn ${BAL.stamina.perLoss}. Đạt 3 sao để càn quét (tốn thể lực và lương, không mất quân).</p>
       <label class="toggle"><input type="checkbox" id="autoRefill2" data-act="toggleRefill" ${S.settings.autoRefill ? 'checked' : ''}> Tự bổ sung quân trước trận</label>
     </div>${chapters}`;
 }
@@ -483,7 +507,7 @@ function renderNav() {
   const tabs = [
     ['city', 'Môn phái', buildingSprite(BUILDINGS.chinhDien.roof, 1), S.queue ? 0 : BUILDING_ORDER.some((id) => G.upgradeCheck(S, id).ok)],
     ['heroes', 'Hiệp khách', heroSprite(HEROES.lyThanhPhong.palette, 'kiem'), G.tavernOpen(S) && now() >= S.tavern.nextFree],
-    ['campaign', 'Chinh chiến', heroSprite(['#8a2a2a', '#5a1a1a', '#1a1010', '#e8b84a'], 'thuong'), S.stamina.cur >= BALANCE.stamina.max],
+    ['campaign', 'Chinh chiến', heroSprite(['#8a2a2a', '#5a1a1a', '#1a1010', '#e8b84a'], 'thuong'), S.stamina.cur >= BAL.stamina.max],
     ['forge', 'Lò rèn', icon('huyenThiet'), false],
     ['quests', 'Nhiệm vụ', icon('biKip'), G.claimableCount(S) > 0],
   ];
@@ -781,7 +805,7 @@ const ACTIONS = {
   reset: () => {
     if (ui.confirm !== 'reset') { ui.confirm = 'reset'; renderAll(); return; }
     ui.confirm = null;
-    G.clearStorage();
+    storage.clear();
     S = G.newGame(now());
     save();
     ui.tab = 'city';
@@ -830,7 +854,7 @@ function start(data = {}) {
   if (data.save) {
     try { S = G.deserialize(data.save, now()); } catch { S = null; }
   }
-  S = S || G.loadFromStorage(now()) || G.newGame(now());
+  S = S || storage.load(now()) || G.newGame(now());
   G.tick(S, now());
   if (G.tavernOpen(S) && !S.tavern.candidates.length && now() >= S.tavern.nextFree) G.refreshTavern(S, now(), 'free');
   save();

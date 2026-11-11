@@ -1,2 +1,5 @@
 node_modules/
 dist/
+web/build/
+config/~$*.xlsx
+config/*.backup-*.xlsx
