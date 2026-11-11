@@ -6,7 +6,7 @@
 |---|---|
 | Chạy tốt trên mobile, chống lag | **Cocos Creator 3.8** (2D, WebGL/native, nhẹ) |
 | Bạn tự chỉnh UI, hình ảnh | Editor kéo thả của Cocos Creator (Windows) |
-| Bạn tự chỉnh số liệu | Excel `config/GiangHo.xlsx` → JSON, có kiểm tra lỗi |
+| Bạn tự chỉnh số liệu | Excel `config/DuLieuGame.xlsx` → JSON, có kiểm tra lỗi |
 | Chi phí thấp | Cocos Creator, Node.js, PostgreSQL đều miễn phí. Chỉ tốn phí tài khoản Google Play (một lần) / App Store (hằng năm) khi phát hành |
 | Dễ test trên PC | Bản web (`choi-thu.bat`) và nút Preview của Cocos chạy ngay trên trình duyệt |
 | Phát hành online sau này | `core/` TypeScript thuần chạy được cả trên server Node.js để xác nhận mọi hành động |
@@ -14,7 +14,7 @@
 ## Kiến trúc
 
 ```
-                 config/GiangHo.xlsx
+                 config/DuLieuGame.xlsx
                          │ npm run config (kiểm tra lỗi)
                          ▼
                  config/game-config.json

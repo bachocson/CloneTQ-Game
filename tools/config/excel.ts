@@ -1,6 +1,6 @@
 // Đổi qua lại giữa file Excel cấu hình và config/game-config.json.
-//   npm run config            đọc config/GiangHo.xlsx, kiểm tra, ghi game-config.json
-//   npm run config:export     tạo lại GiangHo.xlsx từ game-config.json (ghi đè!)
+//   npm run config            đọc config/DuLieuGame.xlsx, kiểm tra, ghi game-config.json
+//   npm run config:export     tạo lại DuLieuGame.xlsx từ game-config.json (ghi đè!)
 
 import ExcelJS from 'exceljs';
 import { readFileSync, writeFileSync, existsSync, copyFileSync, mkdirSync } from 'node:fs';
@@ -11,7 +11,7 @@ import { SHEETS, BALANCE_NOTES, setPath, parseEffect, type Col, type Row, type S
 import { validateConfig } from './validate.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-export const XLSX_PATH = join(ROOT, 'config', 'GiangHo.xlsx');
+export const XLSX_PATH = join(ROOT, 'config', 'DuLieuGame.xlsx');
 export const JSON_PATH = join(ROOT, 'config', 'game-config.json');
 const ARRAY_KEYS = new Set(['balance.enemy.counts', 'balance.starThresholds']);
 const STRING_KEYS = new Set(['version', 'balance.enemy.eliteSkill']);
@@ -35,7 +35,7 @@ function textColor(hex: string): string {
 
 export async function exportXlsx(cfg: GameConfig, out = XLSX_PATH): Promise<void> {
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'Giang Hồ Chưởng Môn';
+  wb.creator = 'Tam Quốc Tranh Bá';
 
   const guide = wb.addWorksheet('Hướng dẫn', { properties: { tabColor: { argb: 'FFE8B84A' } } });
   guide.getColumn(1).width = 110;
@@ -50,7 +50,7 @@ export async function exportXlsx(cfg: GameConfig, out = XLSX_PATH): Promise<void
     'Quy tắc:',
     '• Dòng 1 của mỗi sheet là tiêu đề. Phần trong ngoặc (vd "(name)") là khóa máy đọc: KHÔNG sửa phần trong ngoặc. Phần chữ trước ngoặc đổi thoải mái.',
     '• Mỗi dòng dữ liệu là một mục. Thêm dòng để thêm mục mới, xóa dòng để bỏ mục. Dòng trống bị bỏ qua.',
-    '• Cột "Mã" là mã dùng để tham chiếu giữa các sheet (vd hiệp khách ghi mã tuyệt kỹ). Chỉ dùng chữ không dấu, số, gạch dưới. Đừng đổi mã sau khi game đã phát hành vì sẽ hỏng dữ liệu lưu của người chơi.',
+    '• Cột "Mã" là mã dùng để tham chiếu giữa các sheet (vd võ tướng ghi mã chiến pháp). Chỉ dùng chữ không dấu, số, gạch dưới. Đừng đổi mã sau khi game đã phát hành vì sẽ hỏng dữ liệu lưu của người chơi.',
     '• Ô có danh sách thả xuống: chọn trong danh sách. Ô màu: ghi dạng #RRGGBB, màu nền ô sẽ cập nhật khi xuất lại.',
     '• Tỉ lệ ghi dạng số thập phân: 0.3 nghĩa là 30%.',
     '• Rê chuột vào ô tiêu đề để xem giải thích (nếu có).',
@@ -264,7 +264,7 @@ function readKv(ws: ExcelJS.Worksheet, cfg: GameConfig, errors: string[], warnin
 }
 
 // Thứ tự đọc: sheet sau có thể dựa vào dữ liệu sheet trước (danh sách tài nguyên, phe, hệ...)
-const ORDER = ['Cân bằng', 'Xuất trận', 'Thưởng phe', 'Tài nguyên', 'Vật phẩm', 'Phe', 'Phẩm chất', 'Bậc đệ tử', 'Đệ tử', 'Tuyệt kỹ', 'Công trình', 'Hiệp khách', 'Chương', 'Ô trang bị', 'Phẩm trang bị', 'Nhiệm vụ'];
+const ORDER = ['Cân bằng', 'Xuất trận', 'Thưởng phe', 'Tài nguyên', 'Vật phẩm', 'Phe', 'Phẩm chất', 'Bậc binh chủng', 'Binh chủng', 'Chiến pháp', 'Công trình', 'Võ tướng', 'Chương', 'Ô trang bị', 'Phẩm trang bị', 'Nhiệm vụ'];
 
 export async function importXlsx(path = XLSX_PATH): Promise<ImportResult> {
   const errors: string[] = [];
@@ -281,14 +281,14 @@ export async function importXlsx(path = XLSX_PATH): Promise<ImportResult> {
     if (spec.kind === 'kv') { readKv(ws, cfg, errors, warnings); continue; }
     const cols = spec.columns(cfg);
     const rows = readTable(ws, spec, cols, errors, warnings);
-    if (name === 'Tuyệt kỹ') {
+    if (name === 'Chiến pháp') {
       cfg.skills = {};
       for (const r of rows) {
         const effects = [];
         for (const k of ['fx1', 'fx2', 'fx3']) {
           if (!r[k]) continue;
           const fx = parseEffect(String(r[k]));
-          if (typeof fx === 'string') errors.push(`[Tuyệt kỹ] dòng ${r.__row}, cột "Hiệu ứng ${k.slice(2)}": ${fx}`);
+          if (typeof fx === 'string') errors.push(`[Chiến pháp] dòng ${r.__row}, cột "Hiệu ứng ${k.slice(2)}": ${fx}`);
           else effects.push(fx);
         }
         cfg.skills[r.id as string] = {
@@ -349,7 +349,7 @@ async function main() {
     }
     writeFileSync(out, JSON.stringify(cfg, null, 2) + '\n');
     console.log(`\n✓ Hợp lệ. Đã ghi ${out}`);
-    console.log(`  ${Object.keys(cfg.heroes).length} hiệp khách, ${Object.keys(cfg.skills).length} tuyệt kỹ, ${Object.keys(cfg.buildings).length} công trình, ${cfg.chapters.length} chương × ${cfg.stagesPerChapter} ải, ${cfg.quests.length} nhiệm vụ`);
+    console.log(`  ${Object.keys(cfg.heroes).length} võ tướng, ${Object.keys(cfg.skills).length} chiến pháp, ${Object.keys(cfg.buildings).length} công trình, ${cfg.chapters.length} chương × ${cfg.stagesPerChapter} ải, ${cfg.quests.length} nhiệm vụ`);
     return;
   }
   console.log('Lệnh: import | export');

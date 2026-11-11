@@ -1,4 +1,4 @@
-// Phó bản: sinh đội địch, đánh, càn quét, kinh nghiệm chưởng môn.
+// Phó bản: sinh đội địch, đánh, càn quét, kinh nghiệm Chúa Công.
 
 import { cfg, playerExpToNext } from './config.js';
 import { simulateBattle } from './battle.js';
@@ -152,7 +152,7 @@ function grantRewards(state: GameState, rewards: Cost, heroUids: number[]): numb
 export function fightCheck(state: GameState, id: string): ActionResult {
   if (!isStageUnlocked(state, id)) {
     const { chapter } = stageInfo(id);
-    if (state.player.level < chapter.reqLevel) return { ok: false, reason: `Cần cấp chưởng môn ${chapter.reqLevel}` };
+    if (state.player.level < chapter.reqLevel) return { ok: false, reason: `Cần cấp Chúa Công ${chapter.reqLevel}` };
     return { ok: false, reason: 'Vượt ải trước đó đã' };
   }
   if (state.stamina.cur < cfg().balance.stamina.perWin) return { ok: false, reason: 'Không đủ thể lực' };

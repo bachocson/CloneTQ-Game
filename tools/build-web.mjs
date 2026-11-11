@@ -12,7 +12,7 @@ export const ESBUILD_OPTS = {
   loader: { '.json': 'json' },
 };
 
-const FONTS = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&family=Pixelify+Sans:wght@500;700&display=swap">';
+const FONTS = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Paytone+One&display=swap">';
 
 export async function buildWeb({ fragment = false } = {}) {
   mkdirSync('web/build', { recursive: true });
@@ -24,12 +24,12 @@ export async function buildWeb({ fragment = false } = {}) {
   const css = readFileSync('web/src/styles.css', 'utf8');
   const html = readFileSync('web/index.html', 'utf8');
   const body = html.slice(html.indexOf('<body>') + 6, html.indexOf('</body>')).replace(/<script[^>]*src="build\/app.js"[^>]*><\/script>/, '').trim();
-  const head = `<title>Giang Hồ Chưởng Môn</title>\n<meta name="claude:viewport-fit-sides" content="cover">\n${FONTS}\n<style>${css}</style>`;
+  const head = `<title>Tam Quốc Tranh Bá</title>\n<meta name="claude:viewport-fit-sides" content="cover">\n${FONTS}\n<style>${css}</style>`;
   const main = `${body}\n<script>${code}</script>`;
   const out = fragment ? 'dist/fragment.html' : 'dist/game.html';
   const page = fragment
     ? `${head}\n${main}\n`
-    : `<!doctype html>\n<html lang="vi">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n<meta name="theme-color" content="#1e1a29">\n${head}\n</head>\n<body>\n${main}\n</body>\n</html>\n`;
+    : `<!doctype html>\n<html lang="vi">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n<meta name="theme-color" content="#3d6f9e">\n${head}\n</head>\n<body>\n${main}\n</body>\n</html>\n`;
   writeFileSync(out, page);
   console.log(`Đã ghi web/build/ và ${out} (${(page.length / 1024).toFixed(1)} KB)`);
 }

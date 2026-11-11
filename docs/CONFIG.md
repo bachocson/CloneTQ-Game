@@ -1,6 +1,6 @@
 # Sửa số liệu bằng Excel
 
-File: `config/GiangHo.xlsx`. Mở bằng Excel (hoặc LibreOffice, WPS), sửa, lưu lại.
+File: `config/DuLieuGame.xlsx`. Mở bằng Excel (hoặc LibreOffice, WPS), sửa, lưu lại.
 
 ## Quy trình
 
@@ -28,19 +28,19 @@ Không chạy `choi-thu.bat` thì bấm đúp `cap-nhat-du-lieu.bat` sau khi lư
 | Sheet | Nội dung | Ghi chú |
 |---|---|---|
 | Cân bằng | Mọi con số chung: thể lực, KN lên cấp, sát thương, độ khó địch, phần thưởng, giá rèn… | Chỉ sửa cột **Giá trị**. Cột Ý nghĩa giải thích từng dòng. |
-| Xuất trận | Số người được xuất trận theo cấp chưởng môn | |
+| Xuất trận | Số người được xuất trận theo cấp Chúa Công | |
 | Thưởng phe | % công cộng thêm khi đủ N người cùng phe | |
 | Tài nguyên, Vật phẩm | Tên và mô tả | Mã `luong, go, sat, bac, nguyenbao, tieuHoanDan, huyenThiet, biKip` là bắt buộc. |
 | Công trình | Giá, thời gian, sản lượng, cấp mở | Giá cấp N = giá gốc × hệ số giá^(N−1). Thứ tự dòng = thứ tự hiển thị. |
-| Phe, Phẩm chất | Phe phái, phẩm chất hiệp khách, tỉ lệ gặp ở tửu lâu, giá chiêu mộ | |
-| Hiệp khách | Chỉ số gốc, trưởng thành, sở trường, tuyệt kỹ, màu sắc | Chỉ số cấp N = gốc + trưởng thành × (N−1). |
-| Tuyệt kỹ | Mục tiêu, hệ số, hiệu ứng | Xem cách viết hiệu ứng bên dưới. |
-| Đệ tử, Bậc đệ tử | 4 hệ, chỉ số, khắc chế, tên và giá từng bậc | Số tên bậc ở sheet Đệ tử phải bằng số dòng sheet Bậc đệ tử. |
+| Phe, Phẩm chất | Phe phái, phẩm chất võ tướng, tỉ lệ gặp ở tửu quán, giá chiêu mộ | |
+| Võ tướng | Chỉ số gốc, trưởng thành, sở trường, chiến pháp, màu sắc | Chỉ số cấp N = gốc + trưởng thành × (N−1). |
+| Chiến pháp | Mục tiêu, hệ số, hiệu ứng | Xem cách viết hiệu ứng bên dưới. |
+| Binh chủng, Bậc binh chủng | 4 hệ, chỉ số, khắc chế, tên và giá từng bậc | Số tên bậc ở sheet Binh chủng phải bằng số dòng sheet Bậc binh chủng. |
 | Chương | Tên, cấp yêu cầu, tên lính, trùm | Đội địch tự sinh theo các dòng `balance.enemy.*` ở sheet Cân bằng. |
 | Ô trang bị, Phẩm trang bị | Tên trang bị theo bậc, tỉ lệ phẩm khi rèn | |
 | Nhiệm vụ | Điều kiện và phần thưởng | Đối tượng: mã công trình, hoặc mã ải dạng `chương-ải` như `2-5`. |
 
-## Viết hiệu ứng tuyệt kỹ
+## Viết hiệu ứng chiến pháp
 
 Mỗi ô một hiệu ứng, dạng `loại tham_số=giá_trị ...`:
 
@@ -61,4 +61,4 @@ Mục tiêu: `mot_muc_tieu`, `hang_truoc`, `hang_sau`, `toan_bo`, `ngau_nhien_2`
 ## Lỡ làm hỏng file Excel?
 
 - Lấy lại bản trên GitHub, hoặc
-- Chạy `npm run config:export` để tạo lại Excel từ `game-config.json` (bản dữ liệu hợp lệ gần nhất). File cũ được sao lưu thành `GiangHo.backup-<số>.xlsx`.
+- Chạy `npm run config:export` để tạo lại Excel từ `game-config.json` (bản dữ liệu hợp lệ gần nhất). File cũ được sao lưu thành `DuLieuGame.backup-<số>.xlsx`.

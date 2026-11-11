@@ -4,7 +4,7 @@ import { cfg, maxTroopsFor } from './config.js';
 import type { GameState, Hero } from './types.js';
 
 export const SAVE_VERSION = 1;
-export const SAVE_KEY = 'giangho_chuongmon_save_v1';
+export const SAVE_KEY = 'tamquoc_tranhba_save_v1';
 
 export function makeHero(state: GameState, tid: string): Hero {
   const t = cfg().heroes[tid];
@@ -49,7 +49,7 @@ export function newGame(now: number, seed: number = (Math.random() * 2 ** 32) >>
   for (const i of Object.keys(C.items)) state.items[i] ??= 0;
   for (const tid of C.starterHeroes) {
     const h = makeHero(state, tid);
-    h.troops = maxTroopsFor(C.heroes[tid].base[0], 0); // đệ tử khởi đầu đủ quân
+    h.troops = maxTroopsFor(C.heroes[tid].base[0], 0); // binh lính khởi đầu đủ quân
     state.heroes.push(h);
   }
   // Xếp đội ban đầu: hàng trước cột giữa rồi cột trái

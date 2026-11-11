@@ -27,7 +27,7 @@ test('offline quá giới hạn thì chỉ tính tối đa offlineCapHours', () 
   assert.ok(Math.abs(s.res.go - before - expected) < 1);
 });
 
-test('nâng công trình: trừ tài nguyên, xong đúng giờ, có kiểm tra Chính Điện', () => {
+test('nâng công trình: trừ tài nguyên, xong đúng giờ, có kiểm tra cấp Phủ', () => {
   const s = G.newGame(T0, 1);
   const goBefore = s.res.go;
   const r = G.startUpgrade(s, 'ruong', T0);
@@ -36,7 +36,7 @@ test('nâng công trình: trừ tài nguyên, xong đúng giờ, có kiểm tra 
   assert.equal(G.upgradeCheck(s, 'xuongGo').ok, false, 'chỉ một hàng đợi');
   G.tick(s, T0 + G.buildingTime('ruong', 2) * 1000);
   assert.equal(s.buildings.ruong, 2);
-  assert.equal(G.upgradeCheck(s, 'ruong').reason, 'Cần Chính Điện cấp 3');
+  assert.equal(G.upgradeCheck(s, 'ruong').reason, `Cần ${CFG.buildings.chinhDien.name} cấp 3`);
 });
 
 test('trận đánh cho cùng kết quả với cùng seed', () => {
@@ -60,12 +60,12 @@ test('đội khởi đầu thắng được ải 1-1, nhận thưởng và mở 
   assert.equal(G.isStageUnlocked(s, '1-3'), false);
 });
 
-test('khắc chế: Quyền đánh Thương mạnh hơn Thương đánh Quyền', () => {
+test('khắc chế: Bộ binh đánh Thương binh mạnh hơn chiều ngược lại', () => {
   const mk = (type: string): G.BattleUnit => ({ id: 1, slot: 1, name: 'x', stats: { canCot: 50, voLuc: 50, ngoTinh: 50 }, type, tier: 1, troops: 300, maxTroops: 300, skill: null, bonus: 0 });
-  const att = G.simulateBattle([mk('quyen')], [mk('thuong')], 1);
-  const def = G.simulateBattle([mk('thuong')], [mk('quyen')], 1);
-  assert.ok(att.win, 'Quyền thắng Thương');
-  assert.equal(def.win, false, 'Thương thua Quyền');
+  const att = G.simulateBattle([mk('bo')], [mk('thuong')], 1);
+  const def = G.simulateBattle([mk('thuong')], [mk('bo')], 1);
+  assert.ok(att.win, 'Bộ thắng Thương');
+  assert.equal(def.win, false, 'Thương thua Bộ');
 });
 
 test('lưu và tải lại giữ nguyên tiến trình', () => {

@@ -31,7 +31,7 @@ export function forgeCost(tier: number): Cost {
 
 export function forge(state: GameState, slot: string, tier: number): ActionResult & { eq?: Equipment } {
   if (!cfg().equipSlots[slot]) return { ok: false, reason: 'Ô trang bị không hợp lệ' };
-  if (tier < 1 || tier > maxForgeTier(state)) return { ok: false, reason: 'Cần Lò Rèn cấp cao hơn' };
+  if (tier < 1 || tier > maxForgeTier(state)) return { ok: false, reason: `Cần ${cfg().buildings.loRen.name} cấp cao hơn` };
   const cost = forgeCost(tier);
   if (!canAfford(state, cost)) return { ok: false, reason: 'Thiếu nguyên liệu', missing: missingFor(state, cost) };
   pay(state, cost);
@@ -60,7 +60,7 @@ export function enhanceCost(eq: Equipment): Cost {
 export function enhance(state: GameState, eqUid: number): ActionResult {
   const eq = state.equipment.find((e) => e.uid === eqUid);
   if (!eq) return { ok: false, reason: 'Không tìm thấy trang bị' };
-  if (eq.enh >= maxEnhance(state)) return { ok: false, reason: 'Cần Lò Rèn cấp cao hơn để cường hóa tiếp' };
+  if (eq.enh >= maxEnhance(state)) return { ok: false, reason: `Cần ${cfg().buildings.loRen.name} cấp cao hơn để cường hóa tiếp` };
   const cost = enhanceCost(eq);
   if (!canAfford(state, cost)) return { ok: false, reason: 'Thiếu nguyên liệu', missing: missingFor(state, cost) };
   pay(state, cost);

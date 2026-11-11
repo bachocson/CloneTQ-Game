@@ -33,7 +33,7 @@ const storage = {
     try { localStorage.removeItem(G.SAVE_KEY); } catch { /* bỏ qua */ }
   },
 };
-import { heroSprite, buildingSprite, icon } from './sprites.js';
+import { heroSprite, buildingSprite, icon, cityGround } from './sprites.js';
 
 const now = () => Date.now();
 let S = null;
@@ -71,7 +71,7 @@ function fmtTime(sec) {
 const nameOf = (k) => (RESOURCES[k] ? RESOURCES[k].short : ITEMS[k] ? ITEMS[k].name : k);
 const img = (src, cls = '') => `<img class="px ${cls}" src="${src}" alt="">`;
 const bar = (v, max, cls = '') => `<div class="bar ${cls}"><i style="width:${Math.max(0, Math.min(100, (v / Math.max(1, max)) * 100)).toFixed(1)}%"></i></div>`;
-const heroImg = (tid, type) => heroSprite(HEROES[tid].palette, type);
+const heroImg = (tid, type) => heroSprite(HEROES[tid].palette, type, { tid, faction: FACTIONS[HEROES[tid].faction].color });
 
 function costHtml(cost) {
   return `<div class="cost">${Object.entries(cost)
@@ -123,84 +123,134 @@ function renderTop() {
   const cap = G.storageCap(S);
   const st = S.stamina;
   const stLeft = st.cur < BAL.stamina.max ? BAL.stamina.regenSeconds - (now() - st.last) / 1000 : 0;
+  const pill = (k) => {
+    const full = k !== 'nguyenbao' && S.res[k] >= cap;
+    const rate = k !== 'nguyenbao' ? ` (+${fmt(G.productionPerHour(S, k))}/giờ, kho ${fmt(cap)})` : '';
+    return `<div class="res ${full ? 'full' : ''}" title="${RESOURCES[k].name}${rate}">${img(icon(k))}<span class="num disp">${fmt(S.res[k])}</span></div>`;
+  };
   $('#top').innerHTML = `
     <div class="top-row">
-      <div class="lv-badge" title="Cấp chưởng môn">${S.player.level}</div>
+      <div class="lv-badge" title="Cấp Chúa Công"><span class="disp">${S.player.level}</span></div>
       <div class="top-mid">
-        <div class="row"><span class="top-title">Giang Hồ Chưởng Môn</span><span class="spacer"></span><span class="muted num">${fmt(S.player.exp)}/${fmt(need)}</span></div>
-        ${bar(S.player.exp, need)}
+        <div class="row"><span class="top-title disp">Chúa Công</span><span class="spacer"></span><span class="num disp" style="font-size:12px">${fmt(S.player.exp)}/${fmt(need)}</span></div>
+        ${bar(S.player.exp, need, 'blue')}
       </div>
-      <div class="stamina" title="Thể lực">${img(icon('stamina'))}<span class="num">${st.cur}/${BAL.stamina.max}</span>${stLeft > 0 ? `<span class="muted num">${fmtTime(stLeft)}</span>` : ''}</div>
     </div>
     <div class="res-row">
-      ${['luong', 'go', 'sat', 'bac', 'nguyenbao']
-        .map((k) => {
-          const full = k !== 'nguyenbao' && S.res[k] >= cap;
-          const rate = k !== 'nguyenbao' ? ` (+${fmt(G.productionPerHour(S, k))}/giờ, kho ${fmt(cap)})` : '';
-          return `<div class="res ${full ? 'full' : ''}" title="${RESOURCES[k].name}${rate}">${img(icon(k))}<span class="num">${fmt(S.res[k])}</span></div>`;
-        })
-        .join('')}
+      ${['luong', 'go', 'sat', 'bac', 'nguyenbao'].map(pill).join('')}
+      <div class="res" title="Thể lực">${img(icon('stamina'))}<span class="num disp">${st.cur}/${BAL.stamina.max}${stLeft > 0 ? ` <small style="font-size:10px">${fmtTime(stLeft)}</small>` : ''}</span></div>
     </div>`;
 }
 
-// ---------- Môn phái ----------
+// ---------- Thành trì ----------
+// Vị trí công trình trên bản đồ (tỉ lệ theo chiều rộng / chiều cao khung bản đồ).
+const CITY_POS = {
+  tangKinh: [0.5, 0.36], loRen: [0.667, 0.465], tuuLau: [0.333, 0.465],
+  khoHang: [0.833, 0.57], chinhDien: [0.5, 0.57], luyenVo: [0.167, 0.57],
+  xuongGo: [0.667, 0.675], ruong: [0.333, 0.675], tienTrang: [0.5, 0.78], moSat: [0.89, 0.86],
+};
+
+function buildingEffect(id, lv) {
+  const b = BUILDINGS[id];
+  if (b.produces) return `${RESOURCES[b.produces].name}: +${fmt(G.buildingProduction(id, lv))}/giờ`;
+  if (id === 'khoHang') return `Sức chứa: ${fmt(Math.floor((b.storageBase ?? 0) * Math.pow(b.storageGrowth ?? 1, Math.max(0, lv - 1))))}`;
+  if (id === 'luyenVo') return `Binh lực tối đa +${lv * BAL.troops.perLuyenVo}`;
+  if (id === 'tuuLau') return `Chứa ${Math.floor(BAL.tavern.rosterBase + lv * BAL.tavern.rosterPerLevel)} võ tướng`;
+  if (id === 'loRen') return lv ? `Rèn tối đa bậc ${Math.min(5, 1 + Math.floor(lv / BAL.equip.tierEveryLoRen))}, cường hóa tối đa +${lv * BAL.equip.maxEnhancePerLoRen}` : 'Chưa xây';
+  if (id === 'tangKinh') return `Chiến pháp tối đa cấp ${1 + lv}`;
+  if (id === 'chinhDien') return `Công trình khác tối đa cấp ${lv}`;
+  return '';
+}
+
 function viewCity() {
   const q = S.queue;
-  let queueHtml = `<div class="panel"><p class="muted">Thợ đang rảnh. Chọn một công trình để nâng cấp.</p></div>`;
-  if (q) {
-    const total = (q.endsAt - q.startedAt) / 1000;
-    const left = (q.endsAt - now()) / 1000;
-    const cost = G.speedUpCost(S, now());
-    queueHtml = `<div class="panel hi queue">
-      <div class="row"><b>${esc(BUILDINGS[q.id].name)}</b><span class="muted">lên cấp ${q.toLevel}</span><span class="spacer"></span><span class="num" data-timer="${q.endsAt}">${fmtTime(left)}</span></div>
-      <div data-progress="${q.startedAt}|${q.endsAt}">${bar(total - left, total, 'jade')}</div>
-      <div class="row"><span class="spacer"></span><button class="btn small ${cost ? '' : 'jade'}" data-act="speedUp">${cost ? `Xong ngay · ${cost} N.Bảo` : 'Xong ngay · miễn phí'}</button></div>
-    </div>`;
-  }
+  const ids = [...BUILDING_ORDER].sort((a, b) => (CITY_POS[a]?.[1] ?? 0) - (CITY_POS[b]?.[1] ?? 0));
+  const pins = ids.map((id) => {
+    const [x, y] = CITY_POS[id] ?? [0.5, 0.5];
+    const b = BUILDINGS[id];
+    const lv = S.buildings[id] || 0;
+    const locked = S.player.level < b.unlockLevel;
+    const building = q && q.id === id;
+    const can = !q && G.upgradeCheck(S, id).ok;
+    let over = '';
+    if (building) {
+      const total = (q.endsAt - q.startedAt) / 1000;
+      const left = (q.endsAt - now()) / 1000;
+      over = `<div class="pin-build"><span class="t num disp" data-timer="${q.endsAt}">${fmtTime(left)}</span><div data-progress="${q.startedAt}|${q.endsAt}">${bar(total - left, total, 'green')}</div></div>`;
+    } else if (can) over = '<span class="pin-up">▲</span>';
+    return `<button class="bld-pin ${ui.sheet?.id === id ? 'sel' : ''}" style="left:${x * 100}%;top:${y * 100}%;z-index:${Math.round(y * 100)};${locked ? 'filter:grayscale(1) opacity(.6)' : ''}" data-act="bldTap" data-id="${id}" aria-label="${esc(b.name)} cấp ${lv}">
+      ${img(buildingSprite(id, b.roof, lv))}${lv ? `<span class="pin-lv num disp">${lv}</span>` : ''}${over}
+    </button>`;
+  }).join('');
   const list = BUILDING_ORDER.map((id) => {
     const b = BUILDINGS[id];
     const lv = S.buildings[id] || 0;
-    const chk = G.upgradeCheck(S, id);
-    let effect = '';
-    if (b.produces) effect = `${RESOURCES[b.produces].name}: +${fmt(lv ? b.prodBase * lv * Math.pow(b.prodGrowth, lv - 1) : 0)}/giờ → +${fmt(b.prodBase * (lv + 1) * Math.pow(b.prodGrowth, lv))}/giờ`;
-    else if (id === 'khoHang') effect = `Sức chứa: ${fmt(G.storageCap(S))}`;
-    else if (id === 'luyenVo') effect = `Quân số tối đa +${lv * BAL.troops.perLuyenVo}`;
-    else if (id === 'tuuLau') effect = `Chứa ${G.rosterLimit(S)} hiệp khách`;
-    else if (id === 'loRen') effect = lv ? `Rèn tối đa bậc ${G.maxForgeTier(S)}, cường hóa tối đa +${G.maxEnhance(S)}` : 'Chưa xây';
-    else if (id === 'tangKinh') effect = `Tuyệt kỹ tối đa cấp ${1 + lv}`;
-    else if (id === 'chinhDien') effect = `Công trình khác tối đa cấp ${lv}`;
     const locked = S.player.level < b.unlockLevel;
-    const to = lv + 1;
-    const cost = G.buildingCost(id, to);
-    return `<div class="panel bld ${locked ? 'locked' : ''}">
-      ${img(buildingSprite(b.roof, lv))}
-      <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
-        <div class="row"><h3>${esc(b.name)}</h3><span class="lv">Lv ${lv}</span></div>
-        <p class="muted">${esc(effect)}</p>
-        ${locked ? `<p class="muted">Mở ở cấp chưởng môn ${b.unlockLevel}</p>` : `
-        <div class="row wrap">${costHtml(cost)}<span class="muted num">${fmtTime(G.buildingTime(id, to))}</span></div>
-        <div class="row"><span class="muted">${chk.ok ? '' : esc(chk.reason)}</span><span class="spacer"></span>
-          <button class="btn small" data-act="upgrade" data-id="${id}" ${chk.ok ? '' : 'disabled'}>${lv ? 'Nâng cấp' : 'Xây'}</button></div>`}
-      </div>
-    </div>`;
+    const can = !q && G.upgradeCheck(S, id).ok;
+    return `<button class="bld-row ${can ? 'can' : ''} ${locked ? 'locked' : ''}" data-act="bldTap" data-id="${id}">
+      ${img(buildingSprite(id, b.roof, lv))}
+      <span style="min-width:0"><b>${esc(b.name)}</b><small>${locked ? `Mở ở cấp ${b.unlockLevel}` : q && q.id === id ? 'Đang xây…' : `Cấp ${lv}`}</small></span>
+    </button>`;
   }).join('');
-  return `<h2>Môn phái</h2>${queueHtml}${list}`;
+  const W = 520;
+  return `
+    <div class="city" style="background-image:url(${cityGround(W, Math.round(W * 0.8), 12)})">${pins}</div>
+    ${q ? `<div class="panel hi row"><b>Đang xây:</b><span>${esc(BUILDINGS[q.id].name)} → cấp ${q.toLevel}</span><span class="spacer"></span><span class="num" data-timer="${q.endsAt}">${fmtTime((q.endsAt - now()) / 1000)}</span>
+      <button class="btn small gold" data-act="speedUp">${G.speedUpCost(S, now()) ? `${G.speedUpCost(S, now())} ${img(icon('nguyenbao'))}` : 'Xong ngay'}</button></div>` : '<p class="muted" style="text-align:center">Chạm vào công trình để nâng cấp.</p>'}
+    <div class="bld-list">${list}</div>`;
 }
 
-// ---------- Hiệp khách ----------
+function buildingSheet(id) {
+  const b = BUILDINGS[id];
+  const lv = S.buildings[id] || 0;
+  const q = S.queue;
+  const to = lv + 1;
+  const chk = G.upgradeCheck(S, id);
+  const locked = S.player.level < b.unlockLevel;
+  let action;
+  if (q && q.id === id) {
+    const total = (q.endsAt - q.startedAt) / 1000;
+    const left = (q.endsAt - now()) / 1000;
+    const cost = G.speedUpCost(S, now());
+    action = `<div class="panel hi" style="display:flex;flex-direction:column;gap:6px">
+      <div class="row"><b>Đang lên cấp ${q.toLevel}</b><span class="spacer"></span><span class="num" data-timer="${q.endsAt}">${fmtTime(left)}</span></div>
+      <div data-progress="${q.startedAt}|${q.endsAt}">${bar(total - left, total, 'green')}</div>
+      <button class="btn gold" data-act="speedUp">${cost ? `Xong ngay · ${cost} ${img(icon('nguyenbao'))}` : 'Xong ngay (miễn phí)'}</button></div>`;
+  } else if (locked) {
+    action = `<div class="panel"><p>Mở khi Chúa Công đạt cấp ${b.unlockLevel}.</p></div>`;
+  } else {
+    action = `<div class="panel" style="display:flex;flex-direction:column;gap:8px">
+      <div class="row"><b>Lên cấp ${to}</b><span class="spacer"></span><span class="muted num">Thời gian ${fmtTime(G.buildingTime(id, to))}</span></div>
+      <p class="muted">${esc(buildingEffect(id, lv))} → <b style="color:var(--green-dk)">${esc(buildingEffect(id, to))}</b></p>
+      ${costHtml(G.buildingCost(id, to))}
+      ${chk.ok ? '' : `<p style="color:var(--red-dk)">${esc(chk.reason)}</p>`}
+      <button class="btn" data-act="upgrade" data-id="${id}" ${chk.ok ? '' : 'disabled'}>${lv ? 'Nâng cấp' : 'Xây dựng'}</button></div>`;
+  }
+  const extra = id === 'tuuLau' && lv ? '<button class="btn blue" data-act="goto" data-id="heroes" data-sub="tavern">Vào Tửu Quán</button>'
+    : id === 'luyenVo' && lv ? '<button class="btn blue" data-act="goto" data-id="heroes" data-sub="train">Luyện binh</button>'
+    : id === 'loRen' && lv ? '<button class="btn blue" data-act="goto" data-id="forge">Vào Lò Rèn</button>' : '';
+  return `
+    <div class="sheet-head">
+      <div class="art" style="background:linear-gradient(#bfe7ff,#8fd15a)">${img(buildingSprite(id, b.roof, lv))}</div>
+      <div style="flex:1;min-width:0">
+        <div class="row"><h3 style="font-size:20px">${esc(b.name)}</h3><span class="spacer"></span><button class="btn small ghost" data-act="closeSheet">✕</button></div>
+        <span class="chip num">Cấp ${lv}</span>
+        <p class="muted" style="margin-top:4px">${esc(b.desc)}</p>
+      </div>
+    </div>
+    <p>${esc(buildingEffect(id, lv))}</p>
+    ${action}${extra}`;
+}
+
+// ---------- Võ tướng ----------
 function heroCard(h) {
   const t = HEROES[h.tid];
   const max = G.heroMaxTroops(S, h);
   const inTeam = S.team.includes(h.uid);
-  return `<button class="panel hero-card" data-act="heroTap" data-uid="${h.uid}">
-    ${img(heroImg(h.tid, h.troopType))}
-    <div style="min-width:0;display:flex;flex-direction:column;gap:3px">
-      <div class="row"><b>${esc(t.name)}</b>${inTeam ? '<span class="chip">Xuất trận</span>' : ''}</div>
-      <div class="row wrap"><span class="q-tag" style="color:${QUALITIES[t.q].color}">${QUALITIES[t.q].name}</span><span class="muted">${FACTIONS[t.faction].name} · ${TROOP_TYPES[h.troopType].name}${h.troopType === t.school ? ' ★' : ''}</span></div>
-      ${bar(h.troops, max, 'blood')}
-      <span class="muted num">Quân ${fmt(h.troops)}/${fmt(max)}</span>
-    </div>
-    <div style="text-align:right"><div class="num" style="color:var(--gold);font-size:16px">Lv ${h.level}</div><div class="muted num">LC ${fmt(G.heroPower(S, h))}</div></div>
+  return `<button class="hcard" style="--qc:${QUALITIES[t.q].color};--fc:${FACTIONS[t.faction].color}" data-act="heroTap" data-uid="${h.uid}" aria-label="${esc(t.name)} cấp ${h.level}">
+    <span class="portrait">${img(heroImg(h.tid, h.troopType))}<span class="lv num disp">${h.level}</span>${inTeam ? '<span class="tag disp">TRẬN</span>' : ''}</span>
+    <span class="nm disp">${esc(t.name)}</span>
+    ${bar(h.troops, max, 'red')}
   </button>`;
 }
 
@@ -208,12 +258,12 @@ function slotHtml(slot) {
   const uid = S.team[slot];
   const h = uid && G.findHero(S, uid);
   const pick = ui.pickSlot === slot ? 'pick' : '';
-  if (!h) return `<button class="slot ${pick}" data-act="slotTap" data-slot="${slot}"><span class="muted">Trống</span></button>`;
+  if (!h) return `<button class="slot ${pick}" data-act="slotTap" data-slot="${slot}"><span class="muted" style="margin:auto">+</span></button>`;
   const max = G.heroMaxTroops(S, h);
-  return `<button class="slot ${pick}" data-act="slotTap" data-slot="${slot}">
+  return `<button class="slot filled ${pick}" data-act="slotTap" data-slot="${slot}">
     ${img(heroImg(h.tid, h.troopType))}
     <span class="name">${esc(HEROES[h.tid].name)}</span>
-    ${bar(h.troops, max, 'blood')}
+    ${bar(h.troops, max, 'red')}
   </button>`;
 }
 
@@ -232,11 +282,11 @@ function teamRefillCost() {
 function viewHeroes() {
   const seg = `<div class="seg">
     <button class="${ui.heroTab === 'team' ? 'on' : ''}" data-act="heroTab" data-id="team">Đội hình</button>
-    <button class="${ui.heroTab === 'tavern' ? 'on' : ''}" data-act="heroTab" data-id="tavern">Tửu Lâu</button>
+    <button class="${ui.heroTab === 'tavern' ? 'on' : ''}" data-act="heroTab" data-id="tavern">Tửu Quán</button>
     <button class="${ui.heroTab === 'train' ? 'on' : ''}" data-act="heroTab" data-id="train">Luyện binh</button>
   </div>`;
-  if (ui.heroTab === 'tavern') return `<h2>Hiệp khách</h2>${seg}${viewTavern()}`;
-  if (ui.heroTab === 'train') return `<h2>Hiệp khách</h2>${seg}${viewTrain()}`;
+  if (ui.heroTab === 'tavern') return `<h2 class="disp">Võ tướng</h2>${seg}${viewTavern()}`;
+  if (ui.heroTab === 'train') return `<h2 class="disp">Võ tướng</h2>${seg}${viewTrain()}`;
 
   const used = S.team.filter(Boolean).length;
   const counts = G.factionCounts(S);
@@ -248,25 +298,25 @@ function viewHeroes() {
     .join(' ');
   const rc = teamRefillCost();
   const roster = [...S.heroes].sort((a, b) => G.heroPower(S, b) - G.heroPower(S, a)).map(heroCard).join('');
-  return `<h2>Hiệp khách</h2>${seg}
+  return `<h2 class="disp">Võ tướng</h2>${seg}
     <div class="panel" style="display:flex;flex-direction:column;gap:8px">
       <div class="row"><b>Đội hình</b><span class="spacer"></span><span class="muted num">${used}/${G.deployLimit(S)} người</span></div>
       <span class="row-label">Hàng trước · đỡ đòn cận chiến</span>
       <div class="formation">${[0, 1, 2].map(slotHtml).join('')}</div>
-      <span class="row-label">Hàng sau · hợp với Ám Khí</span>
+      <span class="row-label">Hàng sau · hợp với Cung binh, Mưu sĩ</span>
       <div class="formation">${[3, 4, 5].map(slotHtml).join('')}</div>
-      ${ui.pickSlot !== null ? `<div class="row"><span class="muted">Chọn hiệp khách bên dưới để đặt vào ô đã chọn.</span><span class="spacer"></span><button class="btn small ghost" data-act="clearSlot">Bỏ trống ô</button><button class="btn small ghost" data-act="cancelPick">Hủy</button></div>` : '<p class="muted">Chạm một ô để đổi người. Đủ 3 người cùng phe được cộng công.</p>'}
+      ${ui.pickSlot !== null ? `<div class="row"><span class="muted">Chọn võ tướng bên dưới để đặt vào ô đã chọn.</span><span class="spacer"></span><button class="btn small ghost" data-act="clearSlot">Bỏ trống ô</button><button class="btn small ghost" data-act="cancelPick">Hủy</button></div>` : '<p class="muted">Chạm một ô để đổi người. Đủ 3 người cùng phe được cộng công.</p>'}
       ${factionLine ? `<div class="row wrap">${factionLine}</div>` : ''}
       <div class="row wrap"><label class="toggle"><input type="checkbox" id="autoRefill" data-act="toggleRefill" ${S.settings.autoRefill ? 'checked' : ''}> Tự bổ sung quân trước trận</label>
-        <span class="spacer"></span><button class="btn small jade" data-act="refillTeam" ${rc.luong ? '' : 'disabled'}>Bổ sung quân</button></div>
+        <span class="spacer"></span><button class="btn small " data-act="refillTeam" ${rc.luong ? '' : 'disabled'}>Bổ sung quân</button></div>
       ${rc.luong ? costHtml(rc) : ''}
     </div>
-    <div class="row"><b>Môn hạ</b><span class="spacer"></span><span class="muted num">${S.heroes.length}/${G.rosterLimit(S)}</span></div>
-    ${roster}`;
+    <div class="row"><span class="disp" style="font-size:18px">Võ tướng</span><span class="spacer"></span><span class="num disp">${S.heroes.length}/${G.rosterLimit(S)}</span></div>
+    <div class="cards">${roster}</div>`;
 }
 
 function viewTavern() {
-  if (!G.tavernOpen(S)) return `<div class="panel"><p>Xây <b>Tửu Lâu</b> ở Môn phái (cần cấp chưởng môn ${BUILDINGS.tuuLau.unlockLevel}) để chiêu mộ hiệp khách.</p></div>`;
+  if (!G.tavernOpen(S)) return `<div class="panel"><p>Xây <b>Tửu Quán</b> ở Thành trì (cần cấp Chúa Công ${BUILDINGS.tuuLau.unlockLevel}) để chiêu mộ võ tướng.</p></div>`;
   const tv = BAL.tavern;
   const freeIn = (S.tavern.nextFree - now()) / 1000;
   const cards = S.tavern.candidates.length
@@ -278,7 +328,7 @@ function viewTavern() {
           <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
             <div class="row"><b>${esc(t.name)}</b><span class="q-tag" style="color:${QUALITIES[t.q].color}">${QUALITIES[t.q].name}</span></div>
             <span class="muted">${FACTIONS[t.faction].name} · sở trường ${TROOP_TYPES[t.school].name} · ${esc(SKILLS[t.skill].name)}</span>
-            <span class="muted num">Căn Cốt ${t.base[0]} (+${t.growth[0]}) · Võ ${t.base[1]} (+${t.growth[1]}) · Ngộ ${t.base[2]} (+${t.growth[2]})</span>
+            <span class="muted num">Thống Soái ${t.base[0]} (+${t.growth[0]}) · Võ ${t.base[1]} (+${t.growth[1]}) · Ngộ ${t.base[2]} (+${t.growth[2]})</span>
             <p style="font-size:12px">${esc(t.bio)}</p>
             <div class="row">${costHtml({ bac: cost })}<span class="spacer"></span><button class="btn small" data-act="recruit" data-id="${tid}" ${S.res.bac >= cost ? '' : 'disabled'}>Chiêu mộ</button></div>
           </div>
@@ -286,10 +336,10 @@ function viewTavern() {
       }).join('')
     : `<div class="panel"><p class="muted">Tửu lâu đang vắng khách. Làm mới để mời khách mới.</p></div>`;
   return `<div class="panel" style="display:flex;flex-direction:column;gap:8px">
-      <div class="row"><b>Tửu Lâu cấp ${S.buildings.tuuLau}</b><span class="spacer"></span><span class="muted num">Môn hạ ${S.heroes.length}/${G.rosterLimit(S)}</span></div>
+      <div class="row"><b>Tửu Quán cấp ${S.buildings.tuuLau}</b><span class="spacer"></span><span class="muted num">Võ tướng ${S.heroes.length}/${G.rosterLimit(S)}</span></div>
       <p class="muted">Tửu lâu cấp càng cao càng dễ gặp Tông Sư và Võ Thánh.</p>
       <div class="row wrap">
-        <button class="btn small jade" data-act="tavernRefresh" data-id="free" ${freeIn > 0 ? 'disabled' : ''}>${freeIn > 0 ? `Miễn phí sau <span class="num" data-timer="${S.tavern.nextFree}">${fmtTime(freeIn)}</span>` : 'Làm mới miễn phí'}</button>
+        <button class="btn small " data-act="tavernRefresh" data-id="free" ${freeIn > 0 ? 'disabled' : ''}>${freeIn > 0 ? `Miễn phí sau <span class="num" data-timer="${S.tavern.nextFree}">${fmtTime(freeIn)}</span>` : 'Làm mới miễn phí'}</button>
         <button class="btn small ghost" data-act="tavernRefresh" data-id="bac">${tv.refreshCostBac} bạc</button>
         <button class="btn small ghost" data-act="tavernRefresh" data-id="nguyenbao">${tv.refreshCostNguyenBao} N.Bảo</button>
       </div>
@@ -297,7 +347,7 @@ function viewTavern() {
 }
 
 function viewTrain() {
-  return `<p class="muted">Luyện Võ Trường cấp ${S.buildings.luyenVo || 0}. Bậc đệ tử áp dụng ngay cho mọi hiệp khách dẫn hệ đó. Vòng khắc chế: Quyền › Thương › Kiếm › Quyền, Kiếm còn khắc Ám Khí.</p>` +
+  return `<p class="muted">Giáo Trường cấp ${S.buildings.luyenVo || 0}. Bậc binh chủng áp dụng ngay cho mọi võ tướng dẫn hệ đó. Khắc chế: ${TROOP_ORDER.map((t) => `${TROOP_TYPES[t].name} khắc ${TROOP_TYPES[t].beats.map((b) => TROOP_TYPES[b].name).join(', ')}`).join('; ')}.</p>` +
     TROOP_ORDER.map((type) => {
       const tt = TROOP_TYPES[type];
       const tier = S.troopTiers[type];
@@ -309,8 +359,8 @@ function viewTrain() {
         <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
           <div class="row"><b>${tt.name}</b><span class="chip">Bậc ${tier}/5</span><span class="spacer"></span><span class="muted">${esc(tt.tiers[tier - 1])}</span></div>
           <p class="muted">${esc(tt.desc)}</p>
-          <span class="muted num">Máu/đệ tử ${(tt.hp * m).toFixed(1)} · Công ×${(tt.atk * m).toFixed(2)} · Tốc ${tt.speed}</span>
-          ${next ? `<div class="row wrap">${costHtml(next.cost)}<span class="muted">Luyện Võ ${next.reqLuyenVo}</span></div>
+          <span class="muted num">Máu/lính ${(tt.hp * m).toFixed(1)} · Công ×${(tt.atk * m).toFixed(2)} · Tốc ${tt.speed}</span>
+          ${next ? `<div class="row wrap">${costHtml(next.cost)}<span class="muted">Giáo Trường ${next.reqLuyenVo}</span></div>
           <div class="row"><span class="muted">${chk.ok ? `Lên: ${esc(tt.tiers[tier])}` : esc(chk.reason)}</span><span class="spacer"></span><button class="btn small" data-act="research" data-id="${type}" ${chk.ok ? '' : 'disabled'}>Nghiên cứu</button></div>` : '<span class="muted">Đã đạt bậc cao nhất</span>'}
         </div>
       </div>`;
@@ -334,20 +384,20 @@ function heroSheet(uid) {
     const eq = eqUid && S.equipment.find((e) => e.uid === eqUid);
     const val = eq && G.equipStatValue(eq);
     return `<div class="eq-slot"><span class="muted" style="width:70px">${def.name}</span>
-      <span style="flex:1;min-width:0;color:${eq ? EQUIP_QUALITIES[eq.q].color : 'var(--paper-dim)'}">${eq ? `${esc(G.equipName(eq))} <span class="num muted">+${val.value}</span>` : 'Trống'}</span>
+      <span style="flex:1;min-width:0;color:${eq ? EQUIP_QUALITIES[eq.q].color : 'var(--text-dim)'}">${eq ? `${esc(G.equipName(eq))} <span class="num muted">+${val.value}</span>` : 'Trống'}</span>
       <button class="btn small ghost" data-act="equipPick" data-uid="${uid}" data-slot="${slot}">Đổi</button></div>`;
   }).join('');
   return `
-    <div class="row" style="gap:12px">
-      ${img(heroImg(h.tid, h.troopType))}
+    <div class="sheet-head">
+      <div class="art" style="background:radial-gradient(circle at 50% 35%,#fff6,transparent 60%),${FACTIONS[t.faction].color};border-color:var(--ink);box-shadow:inset 0 0 0 3px ${QUALITIES[t.q].color}">${img(heroImg(h.tid, h.troopType))}</div>
       <div style="flex:1;min-width:0">
-        <div class="row"><h3 style="font-size:17px">${esc(t.name)}</h3><span class="spacer"></span><button class="btn small ghost" data-act="closeSheet">Đóng</button></div>
-        <div class="row wrap"><span class="q-tag" style="color:${QUALITIES[t.q].color}">${QUALITIES[t.q].name}</span><span class="chip" style="color:${FACTIONS[t.faction].color}">${FACTIONS[t.faction].name}</span><span class="chip">Sở trường ${TROOP_TYPES[t.school].name}</span></div>
+        <div class="row"><h3 style="font-size:21px">${esc(t.name)}</h3><span class="spacer"></span><button class="btn small ghost" data-act="closeSheet">✕</button></div>
+        <div class="row wrap"><span class="chip" style="background:${QUALITIES[t.q].color}">${QUALITIES[t.q].name}</span><span class="chip" style="background:${FACTIONS[t.faction].color};color:#fff">${FACTIONS[t.faction].name}</span><span class="chip">${TROOP_TYPES[t.school].name}</span></div>
         <p class="muted" style="margin-top:4px">${esc(t.bio)}</p>
       </div>
     </div>
     <div>
-      <div class="row"><b class="num">Lv ${h.level}</b><span class="muted">${capped ? '(bằng cấp chưởng môn)' : ''}</span><span class="spacer"></span><span class="muted num">${fmt(h.exp)}/${fmt(need)}</span></div>
+      <div class="row"><b class="num">Lv ${h.level}</b><span class="muted">${capped ? '(bằng cấp Chúa Công)' : ''}</span><span class="spacer"></span><span class="muted num">${fmt(h.exp)}/${fmt(need)}</span></div>
       ${bar(h.exp, need, 'sky')}
       <div class="row wrap" style="margin-top:6px">
         <button class="btn small ghost" data-act="useExp" data-uid="${uid}" data-id="tieuHoanDan" data-n="1" ${capped || !S.items.tieuHoanDan ? 'disabled' : ''}>${img(icon('tieuHoanDan'))} Tiểu ×1 (${S.items.tieuHoanDan})</button>
@@ -356,16 +406,16 @@ function heroSheet(uid) {
       </div>
     </div>
     <div class="stat-grid">
-      <div class="stat"><small>Căn Cốt</small><b>${Math.round(s.canCot)}</b><small>+${t.growth[0]}/cấp</small></div>
-      <div class="stat"><small>Võ Lực</small><b>${Math.round(s.voLuc)}</b><small>+${t.growth[1]}/cấp</small></div>
-      <div class="stat"><small>Ngộ Tính</small><b>${Math.round(s.ngoTinh)}</b><small>+${t.growth[2]}/cấp</small></div>
+      <div class="stat"><small>Thống Soái</small><b>${Math.round(s.canCot)}</b><small>+${t.growth[0]}/cấp</small></div>
+      <div class="stat"><small>Vũ Lực</small><b>${Math.round(s.voLuc)}</b><small>+${t.growth[1]}/cấp</small></div>
+      <div class="stat"><small>Trí Lực</small><b>${Math.round(s.ngoTinh)}</b><small>+${t.growth[2]}/cấp</small></div>
     </div>
     <div>
-      <div class="row"><b>Đệ tử</b><span class="spacer"></span><span class="num">${fmt(h.troops)}/${fmt(max)}</span></div>
+      <div class="row"><b>Binh chủng</b><span class="spacer"></span><span class="num">${fmt(h.troops)}/${fmt(max)}</span></div>
       ${bar(h.troops, max, 'blood')}
       <div class="seg" style="margin-top:6px">${TROOP_ORDER.map((ty) => `<button class="${h.troopType === ty ? 'on' : ''}" data-act="troopType" data-uid="${uid}" data-id="${ty}">${TROOP_TYPES[ty].name}${ty === t.school ? '★' : ''}</button>`).join('')}</div>
-      <p class="muted" style="margin-top:4px">${esc(TROOP_TYPES[h.troopType].tiers[S.troopTiers[h.troopType] - 1])} (bậc ${S.troopTiers[h.troopType]}). Đổi hệ sẽ giải tán đệ tử hiện có. ★ là sở trường: +${Math.round(BAL.combat.schoolBonus * 100)}% công.</p>
-      <div class="row" style="margin-top:6px">${h.troops < max ? costHtml(G.refillCost(S, h, max - h.troops)) : '<span class="muted">Đủ quân</span>'}<span class="spacer"></span><button class="btn small jade" data-act="refillOne" data-uid="${uid}" ${h.troops < max ? '' : 'disabled'}>Bổ sung</button></div>
+      <p class="muted" style="margin-top:4px">${esc(TROOP_TYPES[h.troopType].tiers[S.troopTiers[h.troopType] - 1])} (bậc ${S.troopTiers[h.troopType]}). Đổi hệ sẽ giải tán binh lính hiện có. ★ là sở trường: +${Math.round(BAL.combat.schoolBonus * 100)}% công.</p>
+      <div class="row" style="margin-top:6px">${h.troops < max ? costHtml(G.refillCost(S, h, max - h.troops)) : '<span class="muted">Đủ quân</span>'}<span class="spacer"></span><button class="btn small " data-act="refillOne" data-uid="${uid}" ${h.troops < max ? '' : 'disabled'}>Bổ sung</button></div>
     </div>
     <div class="panel">
       <div class="row"><b>${esc(sk.name)}</b><span class="chip num">Cấp ${h.skillLv}/${skMax}</span></div>
@@ -374,7 +424,7 @@ function heroSheet(uid) {
     </div>
     <div style="display:flex;flex-direction:column;gap:6px"><b>Trang bị</b>${eqRows}</div>
     <div class="row"><span class="spacer"></span>
-      <button class="btn small red" data-act="release" data-uid="${uid}">${confirmRelease ? 'Chạm lần nữa để mời rời đi' : 'Mời rời môn phái'}</button></div>`;
+      <button class="btn small red" data-act="release" data-uid="${uid}">${confirmRelease ? 'Chạm lần nữa để mời rời đi' : 'Mời rời thành trì'}</button></div>`;
 }
 
 function equipPickSheet(uid, slot) {
@@ -411,7 +461,7 @@ function viewCampaign() {
     const done = cleared.filter(Boolean).length;
     const head = `<button class="panel ${open ? 'hi' : ''}" data-act="openCh" data-id="${c.id}" style="border:0;text-align:left;cursor:pointer;width:100%;display:flex;flex-direction:column;gap:2px">
       <div class="row"><b>Chương ${c.id} · ${esc(c.name)}</b><span class="spacer"></span><span class="muted num">${done}/${STAGES_PER_CHAPTER}</span></div>
-      <span class="muted">${lockedCh ? `Mở ở cấp chưởng môn ${c.reqLevel}` : esc(c.desc)}</span></button>`;
+      <span class="muted">${lockedCh ? `Mở ở cấp Chúa Công ${c.reqLevel}` : esc(c.desc)}</span></button>`;
     if (!open) return head;
     const stages = Array.from({ length: STAGES_PER_CHAPTER }, (_, i) => {
       const id = G.stageId(c.id, i + 1);
@@ -421,25 +471,25 @@ function viewCampaign() {
       const enemies = G.stageEnemies(id);
       const ep = enemyPower(enemies);
       const ratio = tp / ep;
-      const hint = ratio > 1.25 ? ['Dễ', 'var(--jade)'] : ratio > 0.9 ? ['Ngang sức', 'var(--gold)'] : ['Nguy hiểm', 'var(--blood)'];
+      const hint = ratio > 1.25 ? ['Dễ', 'var(--green-dk)'] : ratio > 0.9 ? ['Ngang sức', 'var(--gold)'] : ['Nguy hiểm', 'var(--red)'];
       const names = [...new Set(enemies.map((e) => e.name))].join(', ');
       const first = !stars;
       return `<div class="panel stage ${unlocked ? '' : 'locked'}">
         <div style="min-width:0;display:flex;flex-direction:column;gap:3px">
-          <div class="row"><b class="num">${id}</b>${info.isBoss ? '<span class="chip" style="color:var(--blood)">Trùm</span>' : ''}<span class="stars">${[1, 2, 3].map((n) => (n <= stars ? '★' : '<span class="off">★</span>')).join('')}</span></div>
+          <div class="row"><b class="num">${id}</b>${info.isBoss ? '<span class="chip" style="color:var(--red)">Trùm</span>' : ''}<span class="stars">${[1, 2, 3].map((n) => (n <= stars ? '★' : '<span class="off">★</span>')).join('')}</span></div>
           <span class="muted">${esc(names)} · ${enemies.length} đội · Lv ${info.level}</span>
           ${unlocked ? `<span class="muted">Lực chiến địch <span class="num">${fmt(ep)}</span> · <span style="color:${hint[1]}">${hint[0]}</span></span>` : ''}
           <div class="row wrap">${rewardHtml(G.stageRewards(id, first))}</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:6px;align-items:stretch">
           <button class="btn small" data-act="fight" data-id="${id}" ${unlocked ? '' : 'disabled'}>${first ? 'Khiêu chiến' : 'Đánh lại'}</button>
-          ${stars >= 3 ? `<button class="btn small jade" data-act="sweep" data-id="${id}" data-n="1">Càn quét</button><button class="btn small ghost" data-act="sweep" data-id="${id}" data-n="5">×5</button>` : ''}
+          ${stars >= 3 ? `<button class="btn small " data-act="sweep" data-id="${id}" data-n="1">Càn quét</button><button class="btn small ghost" data-act="sweep" data-id="${id}" data-n="5">×5</button>` : ''}
         </div>
       </div>`;
     }).join('');
     return head + stages;
   }).join('');
-  return `<h2>Chinh chiến</h2>
+  return `<h2 class="disp">Chinh chiến</h2>
     <div class="panel" style="display:flex;flex-direction:column;gap:6px">
       <div class="row"><span>Lực chiến đội hình</span><span class="spacer"></span><b class="num" style="color:var(--gold)">${fmt(tp)}</b></div>
       <p class="muted">Mỗi trận thắng tốn ${BAL.stamina.perWin} thể lực, thua tốn ${BAL.stamina.perLoss}. Đạt 3 sao để càn quét (tốn thể lực và lương, không mất quân).</p>
@@ -450,7 +500,7 @@ function viewCampaign() {
 // ---------- Lò rèn ----------
 function viewForge() {
   const maxT = G.maxForgeTier(S);
-  if (!maxT) return `<h2>Lò rèn</h2><div class="panel"><p>Xây <b>Lò Rèn</b> ở Môn phái (cần cấp chưởng môn ${BUILDINGS.loRen.unlockLevel}) để rèn trang bị.</p></div>`;
+  if (!maxT) return `<h2 class="disp">Lò rèn</h2><div class="panel"><p>Xây <b>Lò Rèn</b> ở Thành trì (cần cấp Chúa Công ${BUILDINGS.loRen.unlockLevel}) để rèn trang bị.</p></div>`;
   ui.forgeTier = Math.min(Math.max(1, ui.forgeTier), maxT);
   const def = EQUIP_SLOTS[ui.forgeSlot];
   const cost = G.forgeCost(ui.forgeTier);
@@ -461,13 +511,13 @@ function viewForge() {
     const canEnh = eq.enh < G.maxEnhance(S);
     return `<div class="panel" style="display:flex;flex-direction:column;gap:4px">
       <div class="row"><b style="color:${EQUIP_QUALITIES[eq.q].color}">${esc(G.equipName(eq))}</b><span class="spacer"></span><span class="muted">${EQUIP_QUALITIES[eq.q].name} · bậc ${eq.tier}</span></div>
-      <span class="muted">${EQUIP_SLOTS[eq.slot].name}: <span class="num">+${v.value}</span> ${v.stat === 'voLuc' ? 'Võ Lực' : v.stat === 'canCot' ? 'Căn Cốt' : 'Ngộ Tính'}${owner ? ` · đang ở ${esc(HEROES[owner.tid].name)}` : ''}</span>
+      <span class="muted">${EQUIP_SLOTS[eq.slot].name}: <span class="num">+${v.value}</span> ${v.stat === 'voLuc' ? 'Vũ Lực' : v.stat === 'canCot' ? 'Thống Soái' : 'Trí Lực'}${owner ? ` · đang ở ${esc(HEROES[owner.tid].name)}` : ''}</span>
       <div class="row wrap">${canEnh ? costHtml(ec) : `<span class="muted">Cường hóa tối đa +${G.maxEnhance(S)} (nâng Lò Rèn)</span>`}<span class="spacer"></span>
         <button class="btn small" data-act="enhance" data-id="${eq.uid}" ${canEnh ? '' : 'disabled'}>Cường hóa</button>
         <button class="btn small ghost" data-act="sell" data-id="${eq.uid}" ${owner ? 'disabled' : ''}>Bán</button></div>
     </div>`;
   }).join('');
-  return `<h2>Lò rèn</h2>
+  return `<h2 class="disp">Lò rèn</h2>
     <div class="panel" style="display:flex;flex-direction:column;gap:8px">
       <div class="seg">${Object.entries(EQUIP_SLOTS).map(([k, d]) => `<button class="${ui.forgeSlot === k ? 'on' : ''}" data-act="forgeSlot" data-id="${k}">${d.name}</button>`).join('')}</div>
       <div class="seg">${Array.from({ length: maxT }, (_, i) => `<button class="${ui.forgeTier === i + 1 ? 'on' : ''}" data-act="forgeTier" data-id="${i + 1}">Bậc ${i + 1}</button>`).join('')}</div>
@@ -485,15 +535,15 @@ function viewQuests() {
   const firstOpen = list.findIndex((q) => !q.claimed);
   const shown = list.filter((q, i) => q.claimed || i <= firstOpen + 4);
   const rows = shown.map((q) => `<div class="panel ${q.done && !q.claimed ? 'hi' : ''}" style="display:flex;flex-direction:column;gap:4px;${q.claimed ? 'opacity:.55' : ''}">
-      <div class="row"><b>${esc(q.name)}</b><span class="spacer"></span>${q.claimed ? '<span class="muted">Đã nhận</span>' : q.done ? '<span style="color:var(--jade)">Hoàn thành</span>' : '<span class="muted">Đang làm</span>'}</div>
+      <div class="row"><b>${esc(q.name)}</b><span class="spacer"></span>${q.claimed ? '<span class="muted">Đã nhận</span>' : q.done ? '<span style="color:var(--green-dk)">Hoàn thành</span>' : '<span class="muted">Đang làm</span>'}</div>
       <span class="muted">${esc(q.desc)}</span>
       <div class="row wrap">${rewardHtml(q.reward)}<span class="spacer"></span>${!q.claimed ? `<button class="btn small" data-act="claim" data-id="${q.id}" ${q.done ? '' : 'disabled'}>Nhận thưởng</button>` : ''}</div>
     </div>`).reverse().join('');
   const confirmReset = ui.confirm === 'reset';
   const items = Object.entries(ITEMS).map(([k, it]) => `<span class="chip">${img(icon(k))} ${esc(it.name)} <span class="num">${S.items[k] || 0}</span></span>`).join(' ');
-  return `<h2>Nhiệm vụ</h2>${rows}
-    <h2>Túi đồ</h2><div class="panel"><div class="row wrap">${items}</div></div>
-    <h2>Cài đặt</h2>
+  return `<h2 class="disp">Nhiệm vụ</h2>${rows}
+    <h2 class="disp">Túi đồ</h2><div class="panel"><div class="row wrap">${items}</div></div>
+    <h2 class="disp">Cài đặt</h2>
     <div class="panel" style="display:flex;flex-direction:column;gap:8px">
       <p class="muted">Tiến trình tự lưu trên trình duyệt này. Muốn chuyển sang máy khác: chép mã lưu rồi dán ở máy kia.</p>
       <div class="row wrap"><button class="btn small ghost" data-act="exportSave">Chép mã lưu</button><button class="btn small ghost" data-act="importSave">Nạp mã lưu đã dán</button></div>
@@ -504,14 +554,15 @@ function viewQuests() {
 
 // ---------- thanh dưới ----------
 function renderNav() {
+  const claim = G.claimableCount(S);
   const tabs = [
-    ['city', 'Môn phái', buildingSprite(BUILDINGS.chinhDien.roof, 1), S.queue ? 0 : BUILDING_ORDER.some((id) => G.upgradeCheck(S, id).ok)],
-    ['heroes', 'Hiệp khách', heroSprite(HEROES.lyThanhPhong.palette, 'kiem'), G.tavernOpen(S) && now() >= S.tavern.nextFree],
-    ['campaign', 'Chinh chiến', heroSprite(['#8a2a2a', '#5a1a1a', '#1a1010', '#e8b84a'], 'thuong'), S.stamina.cur >= BAL.stamina.max],
-    ['forge', 'Lò rèn', icon('huyenThiet'), false],
-    ['quests', 'Nhiệm vụ', icon('biKip'), G.claimableCount(S) > 0],
+    ['city', 'Thành trì', buildingSprite('chinhDien', BUILDINGS.chinhDien.roof, 3), S.queue ? '' : BUILDING_ORDER.some((id) => G.upgradeCheck(S, id).ok) ? '!' : ''],
+    ['heroes', 'Võ tướng', heroImg('quanVu', 'ky'), G.tavernOpen(S) && now() >= S.tavern.nextFree ? '!' : ''],
+    ['campaign', 'Chinh chiến', heroImg('luBo', 'ky'), S.stamina.cur >= BAL.stamina.max ? '!' : ''],
+    ['forge', 'Lò rèn', buildingSprite('loRen', BUILDINGS.loRen.roof, 1), ''],
+    ['quests', 'Nhiệm vụ', icon('biKip'), claim ? String(claim) : ''],
   ];
-  $('#nav').innerHTML = `<div class="in">${tabs.map(([id, label, src, dot]) => `<button class="tab ${ui.tab === id ? 'on' : ''}" data-act="tab" data-id="${id}">${img(src)}<span>${label}</span>${dot ? '<span class="dot"></span>' : ''}</button>`).join('')}</div>`;
+  $('#nav').innerHTML = `<div class="in">${tabs.map(([id, label, src, dot]) => `<button class="tab ${ui.tab === id ? 'on' : ''}" data-act="tab" data-id="${id}">${img(src)}<span>${label}</span>${dot ? `<span class="dot">${dot}</span>` : ''}</button>`).join('')}</div>`;
 }
 
 function renderSheet() {
@@ -521,7 +572,9 @@ function renderSheet() {
     wrap.innerHTML = '';
     return;
   }
-  const inner = ui.sheet.type === 'hero' ? heroSheet(ui.sheet.uid) : equipPickSheet(ui.sheet.uid, ui.sheet.slot);
+  const inner = ui.sheet.type === 'hero' ? heroSheet(ui.sheet.uid)
+    : ui.sheet.type === 'building' ? buildingSheet(ui.sheet.id)
+    : equipPickSheet(ui.sheet.uid, ui.sheet.slot);
   const prevScroll = wrap.querySelector('.sheet')?.scrollTop || 0;
   wrap.hidden = false;
   wrap.innerHTML = `<div class="sheet" role="dialog" aria-modal="true">${inner}</div>`;
@@ -556,7 +609,21 @@ const battle = { timer: null, speed: 1, data: null, idx: 0, units: {}, finished:
 
 function unitLook(u) {
   if (u.look.kind === 'hero') return heroImg(u.look.tid, u.look.type);
-  return heroSprite(CHAPTERS[u.look.chapter - 1].palette, u.look.type, { boss: u.look.boss });
+  const ch = CHAPTERS.find((c) => c.id === u.look.chapter);
+  return heroSprite(ch.palette, u.look.type, { boss: u.look.boss, faction: ch.palette[0] });
+}
+
+// Vị trí trên chiến trường (tỉ lệ khung): hàng xa nhỏ hơn và hẹp hơn để tạo chiều sâu
+const ROWS = {
+  B_back: { y: 0.27, k: 0.6, s: 0.74 },
+  B_front: { y: 0.46, k: 0.74, s: 0.86 },
+  A_front: { y: 0.7, k: 0.88, s: 0.98 },
+  A_back: { y: 0.93, k: 1.0, s: 1.1 },
+};
+function unitPos(side, slot) {
+  const row = ROWS[`${side}_${slot < 3 ? 'front' : 'back'}`];
+  const lane = [0.2, 0.5, 0.8][slot % 3];
+  return { x: 0.5 + (lane - 0.5) * row.k, y: row.y, s: row.s };
 }
 
 function openBattle(r) {
@@ -564,31 +631,57 @@ function openBattle(r) {
   battle.idx = 0;
   battle.finished = false;
   battle.units = {};
-  const side = (list, key) => {
-    const bySlot = {};
-    for (const u of list) {
-      const uid = `${key}${u.slot}`;
-      battle.units[uid] = { name: u.name, troops: u.troops, max: u.maxTroops };
-      bySlot[u.slot] = { ...u, uid };
-    }
-    const cell = (slot) => {
-      const u = bySlot[slot];
-      if (!u) return '<div class="unit"></div>';
-      return `<div class="unit ${key === 'B' ? 'enemy' : ''}" id="u-${u.uid}">${img(unitLook(u))}<span class="uname">${esc(u.name)}</span>${bar(u.troops, u.maxTroops, key === 'A' ? 'jade' : 'blood')}<span class="num muted" data-cnt>${fmt(u.troops)}</span></div>`;
-    };
-    const rows = key === 'B' ? [[3, 4, 5], [0, 1, 2]] : [[0, 1, 2], [3, 4, 5]];
-    return rows.map((row) => `<div class="side">${row.map(cell).join('')}</div>`).join('');
+  const unitHtml = (u, side) => {
+    const uid = `${side}${u.slot}`;
+    const p = unitPos(side, u.slot);
+    battle.units[uid] = { name: u.name, troops: u.troops, max: u.maxTroops, ranged: TROOP_TYPES[u.type].range === 'ranged', type: u.type, ...p };
+    return `<div class="unit ${side === 'B' ? 'enemy' : ''}" id="u-${uid}" style="left:${p.x * 100}%;top:${p.y * 100}%;width:${21 * p.s}%;z-index:${Math.round(p.y * 100)}">
+      ${img(unitLook(u))}<span class="uname disp">${esc(u.name)}</span>${bar(u.troops, u.maxTroops, side === 'A' ? 'green' : 'red')}<span class="cnt num disp" data-cnt>${fmt(u.troops)}</span></div>`;
   };
   const el = $('#battle');
   el.hidden = false;
   el.innerHTML = `<div class="battle-inner">
-    <div class="row"><b>Ải ${r.stageId}</b><span class="spacer"></span><span class="muted num" id="b-round">Hiệp 0</span></div>
-    <div class="field">${side(r.enemies, 'B')}<div class="banner" id="b-banner"></div>${side(r.team, 'A')}</div>
-    <div class="blog" id="b-log"></div>
+    <div class="row"><span class="disp" style="font-size:18px">Ải ${r.stageId}</span><span class="spacer"></span><span class="round-tag disp" id="b-round">Hiệp 1</span></div>
+    <div class="field" id="b-field"><div class="ground"></div>${r.enemies.map((u) => unitHtml(u, 'B')).join('')}${r.team.map((u) => unitHtml(u, 'A')).join('')}</div>
     <div id="b-result"></div>
-    <div class="row" id="b-ctrl"><button class="btn small ghost" data-act="bSpeed">Tốc độ ×${battle.speed}</button><span class="spacer"></span><button class="btn small" data-act="bSkip">Bỏ qua</button></div>
+    <div class="blog" id="b-log"></div>
+    <div class="row" id="b-ctrl"><button class="btn small ghost" data-act="bSpeed">Tốc độ ×${battle.speed}</button><span class="spacer"></span><button class="btn small gold" data-act="bSkip">Bỏ qua</button></div>
   </div>`;
   stepBattle();
+}
+
+function fieldPx(uid) {
+  const f = document.getElementById('b-field');
+  const u = battle.units[uid];
+  if (!f || !u) return null;
+  return { x: u.x * f.clientWidth, y: u.y * f.clientHeight - 0.09 * f.clientWidth * u.s };
+}
+function lunge(fromUid, toUid) {
+  const a = fieldPx(fromUid);
+  const b = fieldPx(toUid);
+  const el = document.getElementById(`u-${fromUid}`);
+  if (!a || !b || !el || !el.animate) return;
+  const dx = (b.x - a.x) * 0.35;
+  const dy = (b.y - a.y) * 0.35;
+  el.animate([{ translate: '0 0' }, { translate: `${dx}px ${dy}px` }, { translate: '0 0' }], { duration: 300 / battle.speed, easing: 'ease-out' });
+}
+function shoot(fromUid, toUid, orb) {
+  const a = fieldPx(fromUid);
+  const b = fieldPx(toUid);
+  const f = document.getElementById('b-field');
+  if (!a || !b || !f) return;
+  const s = document.createElement('span');
+  s.className = `shot${orb ? ' orb' : ''}`;
+  s.style.left = `${a.x}px`;
+  s.style.top = `${a.y}px`;
+  f.appendChild(s);
+  const ang = (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
+  const anim = s.animate?.([
+    { transform: `translate(-50%,-50%) rotate(${ang}deg)` },
+    { transform: `translate(calc(${b.x - a.x}px - 50%), calc(${b.y - a.y}px - 50%)) rotate(${ang}deg)` },
+  ], { duration: 280 / battle.speed, easing: 'ease-in' });
+  if (anim) anim.onfinish = () => s.remove();
+  else s.remove();
 }
 
 function floatAt(uid, text, cls = '') {
@@ -618,7 +711,7 @@ function logLine(html) {
   box.appendChild(p);
   box.scrollTop = box.scrollHeight;
 }
-const FX_LABEL = { stun: 'Choáng', poison: 'Trúng độc', defDown: 'Giảm phòng', atkDown: 'Giảm công', khiDrain: 'Mất khí', buffAtk: 'Tăng công' };
+const FX_LABEL = { stun: 'Choáng', poison: 'Thiêu đốt', defDown: 'Giảm phòng', atkDown: 'Giảm công', khiDrain: 'Mất khí', buffAtk: 'Tăng công' };
 
 function applyEvent(ev, animate) {
   const name = (uid) => esc(battle.units[uid]?.name || '?');
@@ -627,14 +720,16 @@ function applyEvent(ev, animate) {
     if (r) r.textContent = `Hiệp ${ev.n}`;
     if (animate) logLine(`<span class="muted">— Hiệp ${ev.n} —</span>`);
   } else if (ev.t === 'act') {
-    const actor = document.getElementById(`u-${ev.a}`);
-    if (animate && actor) {
-      actor.classList.add('acting');
-      setTimeout(() => actor.classList.remove('acting'), 260 / battle.speed);
-    }
     if (animate) {
-      const banner = $('#b-banner');
-      if (banner) banner.textContent = ev.kind === 'skill' ? `${battle.units[ev.a].name}: ${ev.skill}` : '';
+      const actor = battle.units[ev.a];
+      const first = ev.hits[0]?.d;
+      if (ev.kind === 'skill') {
+        showBanner(`${actor.name}: ${ev.skill}`);
+        for (const h of ev.hits) shoot(ev.a, h.d, true);
+      } else if (first) {
+        if (actor?.ranged) shoot(ev.a, first, actor.type === 'muu');
+        else lunge(ev.a, first);
+      }
     }
     for (const hit of ev.hits) {
       setTroops(hit.d, hit.left);
@@ -656,13 +751,13 @@ function applyEvent(ev, animate) {
     }
     if (animate) {
       const hits = ev.hits.map((h) => `${name(h.d)} -${fmt(h.kills)}${h.crit ? ' (bạo kích)' : ''}`).join(', ');
-      logLine(`${name(ev.a)} ${ev.kind === 'skill' ? `dùng <b style="color:var(--gold)">${esc(ev.skill)}</b>` : 'tấn công'}${hits ? `: ${hits}` : ''}`);
+      logLine(`${name(ev.a)} ${ev.kind === 'skill' ? `dùng <b style="color:var(--red-dk)">${esc(ev.skill)}</b>` : 'tấn công'}${hits ? `: ${hits}` : ''}`);
     }
   } else if (ev.t === 'poison') {
     setTroops(ev.u, ev.left);
     if (animate) {
       floatAt(ev.u, `-${fmt(ev.kills)}`, 'poison');
-      logLine(`${name(ev.u)} trúng độc -${fmt(ev.kills)}`);
+      logLine(`${name(ev.u)} bị thiêu đốt -${fmt(ev.kills)}`);
     }
   } else if (ev.t === 'stun') {
     if (animate) {
@@ -670,6 +765,17 @@ function applyEvent(ev, animate) {
       logLine(`${name(ev.u)} bị choáng, mất lượt`);
     }
   }
+}
+
+function showBanner(text, cls = '') {
+  const f = document.getElementById('b-field');
+  if (!f) return;
+  f.querySelector('.banner')?.remove();
+  const b = document.createElement('div');
+  b.className = `banner disp ${cls}`;
+  b.textContent = text;
+  f.appendChild(b);
+  if (!cls) setTimeout(() => b.remove(), 900 / battle.speed);
 }
 
 function stepBattle() {
@@ -691,14 +797,13 @@ function finishBattle() {
   while (battle.idx < log.length) applyEvent(log[battle.idx++], false);
   const r = battle.data;
   const win = r.result.win;
-  const banner = $('#b-banner');
-  if (banner) banner.textContent = win ? 'Đại thắng' : 'Thất bại';
+  showBanner(win ? 'Đại thắng!' : 'Thất bại', win ? 'win' : '');
   $('#b-result').innerHTML = `<div class="panel ${win ? 'hi' : ''}" style="display:flex;flex-direction:column;gap:6px">
-    <div class="row"><b style="font-size:16px;color:${win ? 'var(--gold)' : 'var(--blood)'}">${win ? 'Thắng' : 'Thua'}</b>${win ? `<span class="stars">${[1, 2, 3].map((n) => (n <= r.stars ? '★' : '<span class="off">★</span>')).join('')}</span>` : ''}<span class="spacer"></span><span class="muted">${r.result.rounds} hiệp · tổn thất ${Math.round(r.result.lossRatio * 100)}% quân</span></div>
-    ${win ? `<div class="row wrap">${rewardHtml(r.rewards)}</div>` : `<p class="muted">Gợi ý: nâng cấp hiệp khách, nghiên cứu bậc đệ tử, đổi hệ để khắc chế địch (${[...new Set(r.enemies.map((e) => TROOP_TYPES[e.type].name))].join(', ')}).</p>`}
-    ${r.levels ? `<p style="color:var(--jade)">Chưởng môn lên cấp ${S.player.level}!</p>` : ''}
+    <div class="row"><b style="font-size:16px;color:${win ? 'var(--gold)' : 'var(--red)'}">${win ? 'Thắng' : 'Thua'}</b>${win ? `<span class="stars">${[1, 2, 3].map((n) => (n <= r.stars ? '★' : '<span class="off">★</span>')).join('')}</span>` : ''}<span class="spacer"></span><span class="muted">${r.result.rounds} hiệp · tổn thất ${Math.round(r.result.lossRatio * 100)}% quân</span></div>
+    ${win ? `<div class="row wrap">${rewardHtml(r.rewards)}</div>` : `<p class="muted">Gợi ý: nâng cấp võ tướng, nghiên cứu bậc binh chủng, đổi hệ để khắc chế địch (${[...new Set(r.enemies.map((e) => TROOP_TYPES[e.type].name))].join(', ')}).</p>`}
+    ${r.levels ? `<p style="color:var(--green-dk)">Chúa Công lên cấp ${S.player.level}!</p>` : ''}
   </div>`;
-  $('#b-ctrl').innerHTML = `<span class="spacer"></span>${win && G.nextStage(S) && G.isStageUnlocked(S, G.nextStage(S)) ? `<button class="btn small ghost" data-act="bNext">Ải tiếp theo</button>` : ''}<button class="btn" data-act="bClose">Đóng</button>`;
+  $('#b-ctrl').innerHTML = `<span class="spacer"></span>${win && G.nextStage(S) && G.isStageUnlocked(S, G.nextStage(S)) ? `<button class="btn small ghost" data-act="bNext">Ải tiếp theo</button>` : ''}<button class="btn gold" data-act="bClose">Đóng</button>`;
 }
 
 function closeBattle() {
@@ -727,6 +832,8 @@ const ACTIONS = {
   tab: (d) => { ui.tab = d.id; ui.pickSlot = null; ui.confirm = null; renderAll(); window.scrollTo(0, 0); },
   upgrade: (d) => act(() => G.startUpgrade(S, d.id, now())),
   speedUp: () => act(() => G.speedUp(S, now())),
+  bldTap: (d) => { ui.sheet = { type: 'building', id: d.id }; renderAll(); },
+  goto: (d) => { ui.sheet = null; ui.tab = d.id; if (d.sub) ui.heroTab = d.sub; renderAll(); window.scrollTo(0, 0); },
   heroTab: (d) => { ui.heroTab = d.id; ui.pickSlot = null; renderAll(); },
   slotTap: (d) => { const s = Number(d.slot); ui.pickSlot = ui.pickSlot === s ? null : s; renderAll(); },
   cancelPick: () => { ui.pickSlot = null; renderAll(); },
@@ -747,8 +854,8 @@ const ACTIONS = {
   backToHero: (d) => { ui.sheet = { type: 'hero', uid: Number(d.uid) }; renderSheet(); },
   useExp: (d) => act(() => G.useExpItem(S, Number(d.uid), d.id, Number(d.n))),
   troopType: (d) => act(() => G.setTroopType(S, Number(d.uid), d.id)),
-  refillOne: (d) => act(() => { const n = G.refillHero(S, G.findHero(S, Number(d.uid))); return n ? { ok: true, msg: `Bổ sung ${n} đệ tử` } : { ok: false, reason: 'Không đủ lương thực hoặc bạc' }; }),
-  refillTeam: () => act(() => { const n = G.refillTeam(S); return n ? { ok: true, msg: `Bổ sung ${n} đệ tử` } : { ok: false, reason: 'Không đủ lương thực hoặc bạc' }; }),
+  refillOne: (d) => act(() => { const n = G.refillHero(S, G.findHero(S, Number(d.uid))); return n ? { ok: true, msg: `Bổ sung ${n} binh lính` } : { ok: false, reason: 'Không đủ lương thực hoặc bạc' }; }),
+  refillTeam: () => act(() => { const n = G.refillTeam(S); return n ? { ok: true, msg: `Bổ sung ${n} binh lính` } : { ok: false, reason: 'Không đủ lương thực hoặc bạc' }; }),
   toggleRefill: () => { S.settings.autoRefill = !S.settings.autoRefill; save(); renderAll(); },
   skillUp: (d) => act(() => G.upgradeSkill(S, Number(d.uid))),
   equipPick: (d) => { ui.sheet = { type: 'equipPick', uid: Number(d.uid), slot: d.slot }; renderSheet(); },
@@ -768,7 +875,7 @@ const ACTIONS = {
   fight: (d) => startFight(d.id),
   sweep: (d) => act(() => {
     const r = G.sweepStage(S, d.id, Number(d.n));
-    if (r.ok) r.msg = `Càn quét ${r.done} lần: +${fmt(r.total.exp)} KN, +${fmt(r.total.luong)} lương, +${fmt(r.total.bac)} bạc${r.total.tieuHoanDan ? `, +${r.total.tieuHoanDan} Tiểu Hoàn Đan` : ''}${r.levels ? `. Lên cấp ${S.player.level}!` : ''}`;
+    if (r.ok) r.msg = `Càn quét ${r.done} lần: +${fmt(r.total.exp)} KN, +${fmt(r.total.luong)} lương, +${fmt(r.total.bac)} bạc${r.total.tieuHoanDan ? `, +${r.total.tieuHoanDan} Binh Thư Nhỏ` : ''}${r.levels ? `. Lên cấp ${S.player.level}!` : ''}`;
     return r;
   }),
   forgeSlot: (d) => { ui.forgeSlot = d.id; renderAll(); },

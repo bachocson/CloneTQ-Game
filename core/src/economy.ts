@@ -122,11 +122,11 @@ export function tick(state: GameState, now: number): BuildQueue[] {
 export function upgradeCheck(state: GameState, id: string): ActionResult & { cost?: Cost; time?: number } {
   const b = cfg().buildings[id];
   const to = (state.buildings[id] || 0) + 1;
-  if (state.player.level < b.unlockLevel) return { ok: false, reason: `Cần cấp chưởng môn ${b.unlockLevel}` };
+  if (state.player.level < b.unlockLevel) return { ok: false, reason: `Cần cấp Chúa Công ${b.unlockLevel}` };
   if (id === 'chinhDien') {
-    if (to > state.player.level) return { ok: false, reason: `Cần cấp chưởng môn ${to}` };
+    if (to > state.player.level) return { ok: false, reason: `Cần cấp Chúa Công ${to}` };
   } else if (to > state.buildings.chinhDien) {
-    return { ok: false, reason: `Cần Chính Điện cấp ${to}` };
+    return { ok: false, reason: `Cần ${cfg().buildings.chinhDien.name} cấp ${to}` };
   }
   if (state.queue) return { ok: false, reason: 'Đang xây công trình khác' };
   const cost = buildingCost(id, to);

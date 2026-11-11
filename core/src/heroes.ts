@@ -1,4 +1,4 @@
-// Hiệp khách: chỉ số, cấp, quân số, tuyệt kỹ, đội hình, bậc binh chủng.
+// Võ tướng: chỉ số, cấp, quân số, chiến pháp, đội hình, bậc binh chủng.
 
 import { cfg, deploySlotsFor, factionBonusFor, heroExpToNext, maxTroopsFor, power } from './config.js';
 import { equipStatValue } from './equipment.js';
@@ -58,9 +58,9 @@ export function addHeroExp(state: GameState, h: Hero, amount: number): number {
 export function useExpItem(state: GameState, uid: number, item: string, count = 1): ActionResult {
   const h = findHero(state, uid);
   const def = cfg().items[item];
-  if (!h) return { ok: false, reason: 'Không tìm thấy hiệp khách' };
+  if (!h) return { ok: false, reason: 'Không tìm thấy võ tướng' };
   if (!def || !def.exp) return { ok: false, reason: 'Vật phẩm không dùng được' };
-  if (h.level >= state.player.level) return { ok: false, reason: 'Đã đạt giới hạn cấp (bằng cấp chưởng môn)' };
+  if (h.level >= state.player.level) return { ok: false, reason: 'Đã đạt giới hạn cấp (bằng cấp Chúa Công)' };
   if ((state.items[item] || 0) <= 0) return { ok: false, reason: `Hết ${def.name}` };
   let used = 0;
   while (used < count && state.items[item] > 0 && h.level < state.player.level) {
@@ -110,8 +110,8 @@ export function setTroopType(state: GameState, uid: number, type: string): Actio
   if (!h || !cfg().troopTypes[type]) return { ok: false, reason: 'Không hợp lệ' };
   if (h.troopType === type) return { ok: true, msg: '' };
   h.troopType = type;
-  h.troops = 0; // đổi hệ thì giải tán đệ tử cũ
-  return { ok: true, msg: `${cfg().heroes[h.tid].name} chuyển sang dẫn đệ tử hệ ${cfg().troopTypes[type].name}` };
+  h.troops = 0; // đổi hệ thì giải tán binh lính cũ
+  return { ok: true, msg: `${cfg().heroes[h.tid].name} chuyển sang dẫn ${cfg().troopTypes[type].name}` };
 }
 
 export function skillMaxLevel(state: GameState, h: Hero): number {
@@ -124,8 +124,8 @@ export function skillUpgradeCost(h: Hero): Cost {
 
 export function upgradeSkill(state: GameState, uid: number): ActionResult {
   const h = findHero(state, uid);
-  if (!h) return { ok: false, reason: 'Không tìm thấy hiệp khách' };
-  if (h.skillLv >= skillMaxLevel(state, h)) return { ok: false, reason: 'Đã đạt giới hạn (cần Tàng Kinh Các cao hơn hoặc hiệp khách cấp cao hơn)' };
+  if (!h) return { ok: false, reason: 'Không tìm thấy võ tướng' };
+  if (h.skillLv >= skillMaxLevel(state, h)) return { ok: false, reason: `Đã đạt giới hạn (cần ${cfg().buildings.tangKinh.name} cao hơn hoặc võ tướng cấp cao hơn)` };
   const cost = skillUpgradeCost(h);
   if (!canAfford(state, cost)) return { ok: false, reason: 'Thiếu nguyên liệu', missing: missingFor(state, cost) };
   pay(state, cost);
@@ -138,7 +138,7 @@ export function researchCheck(state: GameState, type: string): ActionResult & { 
   const tiers = cfg().tiers;
   if (next > tiers.length) return { ok: false, reason: 'Đã đạt bậc cao nhất' };
   const r = tiers[next - 1];
-  if ((state.buildings.luyenVo || 0) < r.reqLuyenVo) return { ok: false, reason: `Cần Luyện Võ Trường cấp ${r.reqLuyenVo}` };
+  if ((state.buildings.luyenVo || 0) < r.reqLuyenVo) return { ok: false, reason: `Cần ${cfg().buildings.luyenVo.name} cấp ${r.reqLuyenVo}` };
   if (!canAfford(state, r.cost)) return { ok: false, reason: 'Thiếu tài nguyên', missing: missingFor(state, r.cost), cost: r.cost };
   return { ok: true, cost: r.cost, next };
 }
@@ -149,7 +149,7 @@ export function researchTier(state: GameState, type: string): ActionResult {
   pay(state, chk.cost);
   state.troopTiers[type] = chk.next;
   const tt = cfg().troopTypes[type];
-  return { ok: true, msg: `Đệ tử hệ ${tt.name} lên bậc ${chk.next}: ${tt.tiers[chk.next - 1]}` };
+  return { ok: true, msg: `Binh chủng hệ ${tt.name} lên bậc ${chk.next}: ${tt.tiers[chk.next - 1]}` };
 }
 
 export function deployLimit(state: GameState): number {
@@ -158,7 +158,7 @@ export function deployLimit(state: GameState): number {
 
 export function setTeamSlot(state: GameState, slot: number, uid: number | null): ActionResult {
   if (slot < 0 || slot > 5) return { ok: false, reason: 'Ô không hợp lệ' };
-  if (uid !== null && !findHero(state, uid)) return { ok: false, reason: 'Không tìm thấy hiệp khách' };
+  if (uid !== null && !findHero(state, uid)) return { ok: false, reason: 'Không tìm thấy võ tướng' };
   const team = [...state.team];
   const prev = uid === null ? -1 : team.indexOf(uid);
   if (prev >= 0) {
@@ -168,7 +168,7 @@ export function setTeamSlot(state: GameState, slot: number, uid: number | null):
     team[slot] = uid;
   }
   if (team.filter(Boolean).length > deployLimit(state)) {
-    return { ok: false, reason: `Chỉ được xuất trận ${deployLimit(state)} người ở cấp chưởng môn hiện tại` };
+    return { ok: false, reason: `Chỉ được xuất trận ${deployLimit(state)} người ở cấp Chúa Công hiện tại` };
   }
   state.team = team;
   return { ok: true, msg: '' };
@@ -218,8 +218,8 @@ export function rosterLimit(state: GameState): number {
 
 export function releaseHero(state: GameState, uid: number): ActionResult {
   const h = findHero(state, uid);
-  if (!h) return { ok: false, reason: 'Không tìm thấy hiệp khách' };
-  if (state.heroes.length <= 1) return { ok: false, reason: 'Phải giữ ít nhất 1 hiệp khách' };
+  if (!h) return { ok: false, reason: 'Không tìm thấy võ tướng' };
+  if (state.heroes.length <= 1) return { ok: false, reason: 'Phải giữ ít nhất 1 võ tướng' };
   state.team = state.team.map((x) => (x === uid ? null : x));
   state.heroes = state.heroes.filter((x) => x.uid !== uid);
   let totalExp = h.exp;
@@ -227,5 +227,5 @@ export function releaseHero(state: GameState, uid: number): ActionResult {
   const pillExp = cfg().items.tieuHoanDan?.exp || 150;
   const pills = Math.floor((totalExp * cfg().balance.releaseExpRefund) / pillExp);
   state.items.tieuHoanDan = (state.items.tieuHoanDan || 0) + pills;
-  return { ok: true, msg: `${cfg().heroes[h.tid].name} rời môn phái. Nhận lại ${pills} Tiểu Hoàn Đan.` };
+  return { ok: true, msg: `${cfg().heroes[h.tid].name} rời thành trì. Nhận lại ${pills} Binh Thư Nhỏ.` };
 }

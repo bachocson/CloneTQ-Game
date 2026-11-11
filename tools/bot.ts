@@ -169,7 +169,7 @@ function battles(now: number) {
         counters.fights++;
         if (r.result.win) log(now, `Vượt ải ${next} (${r.stars} sao, ${r.result.rounds} hiệp)`);
         else counters.losses++;
-        if (r.levels) log(now, `Chưởng môn lên cấp ${state.player.level}`);
+        if (r.levels) log(now, `Chúa Công lên cấp ${state.player.level}`);
         fought = true;
       }
     }
@@ -192,7 +192,7 @@ function battles(now: number) {
       const r = G.sweepStage(state, three, 1);
       if (!r.ok) break;
       counters.sweeps++;
-      if (state.player.level > before) log(now, `Chưởng môn lên cấp ${state.player.level}`);
+      if (state.player.level > before) log(now, `Chúa Công lên cấp ${state.player.level}`);
       continue;
     }
     break;
@@ -240,8 +240,8 @@ if (JSON_OUT) {
   for (const d of daily) {
     console.log(`Ngày ${d.day}: cấp ${d.level}, ải tiếp theo ${d.stage}`);
     console.log(`  Công trình: ${Object.entries(d.buildings as Record<string, number>).map(([k, v]) => `${BUILDINGS[k].name} ${v}`).join(', ')}`);
-    console.log(`  Bậc đệ tử: ${Object.entries(d.tiers as Record<string, number>).map(([k, v]) => `${TROOP_TYPES[k].name} ${v}`).join(', ')}`);
-    console.log(`  Hiệp khách: ${d.heroes}`);
+    console.log(`  Bậc binh chủng: ${Object.entries(d.tiers as Record<string, number>).map(([k, v]) => `${TROOP_TYPES[k].name} ${v}`).join(', ')}`);
+    console.log(`  Võ tướng: ${d.heroes}`);
     console.log(`  Tài nguyên (kho ${d.cap}): ${Object.entries(d.res as Record<string, number>).map(([k, v]) => `${k} ${v}`).join(', ')}`);
   }
   const milestones = events.filter((e) => /Vượt ải \d-5|lên cấp (5|10|15|20)$/.test(e.msg));

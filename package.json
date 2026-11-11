@@ -1,7 +1,7 @@
 {
-  "name": "giang-ho-chuong-mon",
-  "version": "0.2.0",
-  "description": "Game kiếm hiệp cày cuốc, chạy trên trình duyệt điện thoại",
+  "name": "tam-quoc-tranh-ba",
+  "version": "0.3.0",
+  "description": "Game Tam Quốc cày cuốc, chạy trên trình duyệt điện thoại",
   "type": "module",
   "private": true,
   "scripts": {

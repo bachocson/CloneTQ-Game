@@ -1,8 +1,8 @@
-# Giang Hồ Chưởng Môn
+# Tam Quốc Tranh Bá
 
-Game kiếm hiệp cày cuốc chiến thuật cho điện thoại. Bạn là chưởng môn một môn phái nhỏ: xây công trình, chiêu mộ hiệp khách, luyện đệ tử, rèn binh khí, vượt phó bản.
+Game Tam Quốc cày cuốc chiến thuật cho điện thoại, phong cách hoạt hình 2.5D (xem [docs/ART.md](docs/ART.md)). Bạn là Chúa Công một thành trì nhỏ: xây công trình, chiêu mộ võ tướng, luyện binh lính, rèn binh khí, vượt phó bản.
 
-Phiên bản 0.2: luật chơi viết bằng TypeScript, dùng chung được cho bản web, bản Cocos Creator và server online sau này. Toàn bộ số liệu nằm trong **một file Excel**.
+Phiên bản 0.3: luật chơi viết bằng TypeScript, dùng chung được cho bản web, bản Cocos Creator và server online sau này. Toàn bộ số liệu nằm trong **một file Excel**.
 
 ## Bắt đầu trên Windows
 
@@ -16,15 +16,15 @@ Phiên bản 0.2: luật chơi viết bằng TypeScript, dùng chung được ch
 | `cap-nhat-du-lieu.bat` | Kiểm tra file Excel và cập nhật dữ liệu game (khi không chạy `choi-thu.bat`). |
 | `bot-can-bang.bat` | Cho bot tự chơi 7 ngày, xem nhịp độ tiến trình sau khi đổi số. |
 
-## Sửa số liệu: `config/GiangHo.xlsx`
+## Sửa số liệu: `config/DuLieuGame.xlsx`
 
-Mỗi sheet là một loại dữ liệu: Cân bằng, Công trình, Hiệp khách, Tuyệt kỹ, Đệ tử, Bậc đệ tử, Chương, Nhiệm vụ, Trang bị… Sheet **Hướng dẫn** trong file giải thích quy tắc. Rê chuột vào tiêu đề cột để xem ghi chú.
+Mỗi sheet là một loại dữ liệu: Cân bằng, Công trình, Võ tướng, Chiến pháp, Binh chủng, Bậc binh chủng, Chương, Nhiệm vụ, Trang bị… Sheet **Hướng dẫn** trong file giải thích quy tắc. Rê chuột vào tiêu đề cột để xem ghi chú.
 
 Sửa xong, lưu file. Công cụ kiểm tra và báo lỗi đúng chỗ, ví dụ:
 
 ```
-✗ [Hiệp khách] dòng 4, cột "Căn Cốt gốc": "năm mươi" không phải con số
-✗ [Hiệp khách] lyThanhPhong: tuyệt kỹ "khongCo" không có trong sheet Tuyệt kỹ
+✗ [Võ tướng] dòng 4, cột "Thống Soái gốc": "năm mươi" không phải con số
+✗ [Võ tướng] lieuHoa: chiến pháp "khongCo" không có trong sheet Chiến pháp
 ```
 
 Có lỗi thì dữ liệu game giữ nguyên bản cũ, không bị hỏng. Chi tiết: [docs/CONFIG.md](docs/CONFIG.md).
@@ -32,7 +32,7 @@ Có lỗi thì dữ liệu game giữ nguyên bản cũ, không bị hỏng. Chi
 ## Cấu trúc
 
 ```
-config/GiangHo.xlsx       ← bạn sửa file này
+config/DuLieuGame.xlsx       ← bạn sửa file này
 config/game-config.json   ← sinh ra từ Excel, game đọc file này (đừng sửa tay)
 core/src/                 Luật chơi (TypeScript, không phụ thuộc giao diện): dùng chung cho web, Cocos, server
 web/                      Bản chơi thử chạy trên trình duyệt
@@ -66,4 +66,4 @@ Xem [docs/PLAN.md](docs/PLAN.md).
 
 ## Bản quyền nội dung
 
-Lối chơi theo thể loại cày cuốc chiến thuật nói chung. Tên nhân vật, võ công, địa danh, binh chủng đều tự đặt. Đồ họa vẽ bằng mã trong `web/src/sprites.js`.
+Lối chơi theo thể loại cày cuốc chiến thuật nói chung. Tên nhân vật, võ công, địa danh, binh chủng đều tự đặt. Nhân vật Tam Quốc là nhân vật lịch sử. Phong cách hình ảnh lấy cảm hứng chung từ dòng game hoạt hình 2.5D trên mobile; toàn bộ hình vẽ bằng mã trong `web/src/sprites.js`, không dùng tài nguyên của game khác.

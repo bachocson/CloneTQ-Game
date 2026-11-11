@@ -39,7 +39,7 @@ function rollCandidates(state: GameState): string[] {
 }
 
 export function refreshTavern(state: GameState, now: number, mode: 'free' | 'bac' | 'nguyenbao' = 'free'): ActionResult {
-  if (!tavernOpen(state)) return { ok: false, reason: 'Cần xây Tửu Lâu' };
+  if (!tavernOpen(state)) return { ok: false, reason: `Cần xây ${cfg().buildings.tuuLau.name}` };
   const tv = cfg().balance.tavern;
   if (mode === 'free') {
     if (now < state.tavern.nextFree) return { ok: false, reason: 'Chưa tới lượt làm mới miễn phí' };
@@ -52,7 +52,7 @@ export function refreshTavern(state: GameState, now: number, mode: 'free' | 'bac
     state.res.nguyenbao -= tv.refreshCostNguyenBao;
   }
   state.tavern.candidates = rollCandidates(state);
-  return { ok: true, msg: 'Khách mới vào tửu lâu' };
+  return { ok: true, msg: 'Khách mới vào tửu quán' };
 }
 
 export function recruitCost(tid: string): number {
@@ -60,9 +60,9 @@ export function recruitCost(tid: string): number {
 }
 
 export function recruit(state: GameState, tid: string): ActionResult & { hero?: Hero } {
-  if (!tavernOpen(state)) return { ok: false, reason: 'Cần xây Tửu Lâu' };
-  if (!state.tavern.candidates.includes(tid)) return { ok: false, reason: 'Người này không có trong tửu lâu' };
-  if (state.heroes.length >= rosterLimit(state)) return { ok: false, reason: `Môn phái chỉ chứa ${rosterLimit(state)} hiệp khách. Nâng Tửu Lâu hoặc mời bớt người đi.` };
+  if (!tavernOpen(state)) return { ok: false, reason: `Cần xây ${cfg().buildings.tuuLau.name}` };
+  if (!state.tavern.candidates.includes(tid)) return { ok: false, reason: 'Người này không có trong tửu quán' };
+  if (state.heroes.length >= rosterLimit(state)) return { ok: false, reason: `Thành trì chỉ chứa ${rosterLimit(state)} võ tướng. Nâng ${cfg().buildings.tuuLau.name} hoặc mời bớt người đi.` };
   const cost = recruitCost(tid);
   if (state.res.bac < cost) return { ok: false, reason: `Cần ${cost} bạc` };
   state.res.bac -= cost;
@@ -70,7 +70,7 @@ export function recruit(state: GameState, tid: string): ActionResult & { hero?: 
   state.heroes.push(h);
   state.tavern.candidates = state.tavern.candidates.filter((x) => x !== tid);
   state.stats.recruited++;
-  return { ok: true, msg: `${cfg().heroes[tid].name} gia nhập môn phái`, hero: h };
+  return { ok: true, msg: `${cfg().heroes[tid].name} gia nhập thành trì`, hero: h };
 }
 
 // ---------- Nhiệm vụ ----------

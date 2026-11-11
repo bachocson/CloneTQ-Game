@@ -10,7 +10,7 @@ import { BALANCE_NOTES } from '../tools/config/schema.js';
 import type { GameConfig } from '../core/src/index.js';
 
 const cfg = JSON.parse(readFileSync(JSON_PATH, 'utf8')) as GameConfig;
-const dir = mkdtempSync(join(tmpdir(), 'giangho-cfg-'));
+const dir = mkdtempSync(join(tmpdir(), 'tamquoc-cfg-'));
 
 test('cấu hình hiện tại hợp lệ', () => {
   assert.deepEqual(validateConfig(cfg), []);
@@ -44,7 +44,7 @@ test('nhập sai trong Excel thì báo lỗi rõ sheet, dòng, cột và không 
   await exportXlsx(cfg, file);
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.readFile(file);
-  const hk = wb.getWorksheet('Hiệp khách')!;
+  const hk = wb.getWorksheet('Võ tướng')!;
   const col = (ws: ExcelJS.Worksheet, key: string) => {
     let idx = 0;
     ws.getRow(1).eachCell((c, i) => { if (String(c.value).endsWith(`(${key})`)) idx = i; });
@@ -53,7 +53,7 @@ test('nhập sai trong Excel thì báo lỗi rõ sheet, dòng, cột và không 
   hk.getRow(3).getCell(col(hk, 'skill')).value = 'tuyetKyKhongCo';
   hk.getRow(4).getCell(col(hk, 'b0')).value = 'năm mươi';
   hk.getRow(5).getCell(col(hk, 'mau_ao')).value = 'xanh';
-  const tk = wb.getWorksheet('Tuyệt kỹ')!;
+  const tk = wb.getWorksheet('Chiến pháp')!;
   tk.getRow(2).getCell(col(tk, 'fx1')).value = 'choang tile=0.3';
   const cb = wb.getWorksheet('Cân bằng')!;
   cb.eachRow((row) => { if (row.getCell(1).value === 'balance.stamina.max') row.getCell(2).value = 'abc'; });
@@ -62,17 +62,17 @@ test('nhập sai trong Excel thì báo lỗi rõ sheet, dòng, cột và không 
   const { cfg: back, errors } = await importXlsx(file);
   assert.equal(back, null);
   const all = errors.join('\n');
-  assert.match(all, /\[Hiệp khách\] dòng 4, cột "Căn Cốt gốc": "năm mươi" không phải con số/);
-  assert.match(all, /\[Hiệp khách\] dòng 5, cột "Màu áo": màu "xanh" phải dạng #RRGGBB/);
-  assert.match(all, /\[Tuyệt kỹ\] dòng 2, cột "Hiệu ứng 1": tham số "tile" không hợp lệ/);
+  assert.match(all, /\[Võ tướng\] dòng 4, cột "Thống Soái gốc": "năm mươi" không phải con số/);
+  assert.match(all, /\[Võ tướng\] dòng 5, cột "Màu áo": màu "xanh" phải dạng #RRGGBB/);
+  assert.match(all, /\[Chiến pháp\] dòng 2, cột "Hiệu ứng 1": tham số "tile" không hợp lệ/);
   assert.match(all, /\[Cân bằng\] dòng \d+ \(balance\.stamina\.max\): "abc" không phải con số/);
 });
 
 test('mã tham chiếu sai được phát hiện', () => {
   const bad = structuredClone(cfg);
-  bad.heroes.lyThanhPhong.skill = 'khongCo';
+  bad.heroes.lieuHoa.skill = 'khongCo';
   bad.quests[0].cond = { type: 'stage', target: '9-9', value: 1 };
   const errs = validateConfig(bad).join('\n');
-  assert.match(errs, /lyThanhPhong: tuyệt kỹ "khongCo" không có trong sheet Tuyệt kỹ/);
+  assert.match(errs, /lieuHoa: chiến pháp "khongCo" không có trong sheet Chiến pháp/);
   assert.match(errs, /ải "9-9" không tồn tại/);
 });
