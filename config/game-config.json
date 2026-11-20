@@ -1183,7 +1183,8 @@
           "chance": 0.2,
           "turns": 1
         }
-      ]
+      ],
+      "vfx": "whirl"
     },
     "thanhLongTram": {
       "name": "Thanh Long Trảm",
@@ -1197,7 +1198,8 @@
           "pct": 0.2,
           "turns": 2
         }
-      ]
+      ],
+      "vfx": "slash"
     },
     "batTranDo": {
       "name": "Bát Trận Đồ",
@@ -1215,7 +1217,8 @@
           "type": "khiDrain",
           "amount": 20
         }
-      ]
+      ],
+      "vfx": "formation"
     },
     "baDaoHieuLenh": {
       "name": "Bá Đạo Hiệu Lệnh",
@@ -1229,7 +1232,8 @@
           "pct": 0.2,
           "turns": 2
         }
-      ]
+      ],
+      "vfx": "command"
     },
     "hoaThieuXichBich": {
       "name": "Hỏa Thiêu Xích Bích",
@@ -1243,7 +1247,8 @@
           "pct": 0.4,
           "turns": 3
         }
-      ]
+      ],
+      "vfx": "fire"
     },
     "thatTienThatXuat": {
       "name": "Thất Tiến Thất Xuất",
@@ -1257,7 +1262,8 @@
           "pct": 0.15,
           "self": true
         }
-      ]
+      ],
+      "vfx": "pierce"
     },
     "quatLuiTruongBan": {
       "name": "Thét Lui Trường Bản",
@@ -1271,7 +1277,8 @@
           "chance": 0.35,
           "turns": 1
         }
-      ]
+      ],
+      "vfx": "roar"
     },
     "anNhanMuuDoat": {
       "name": "Ẩn Nhẫn Mưu Đoạt",
@@ -1285,7 +1292,8 @@
           "pct": 0.2,
           "turns": 2
         }
-      ]
+      ],
+      "vfx": "thunder"
     },
     "tieuBaVuong": {
       "name": "Tiểu Bá Vương",
@@ -1300,7 +1308,8 @@
           "turns": 2,
           "self": true
         }
-      ]
+      ],
+      "vfx": "pierce"
     },
     "songKichHoChu": {
       "name": "Song Kích Hộ Chủ",
@@ -1313,7 +1322,8 @@
           "type": "teamHeal",
           "pct": 0.1
         }
-      ]
+      ],
+      "vfx": "whirl"
     },
     "batThiDamTinh": {
       "name": "Bạt Thỉ Đạm Tình",
@@ -1327,7 +1337,8 @@
           "pct": 0.2,
           "self": true
         }
-      ]
+      ],
+      "vfx": "pierce"
     },
     "bachBoXuyenDuong": {
       "name": "Bách Bộ Xuyên Dương",
@@ -1335,7 +1346,8 @@
       "target": "back",
       "mult": 1.25,
       "stat": "voLuc",
-      "effects": []
+      "effects": [],
+      "vfx": "arrows"
     },
     "hoaThieuLienDoanh": {
       "name": "Hỏa Thiêu Liên Doanh",
@@ -1349,7 +1361,8 @@
           "pct": 0.35,
           "turns": 3
         }
-      ]
+      ],
+      "vfx": "fire"
     },
     "tayLuongThietKy": {
       "name": "Tây Lương Thiết Kỵ",
@@ -1363,7 +1376,8 @@
           "pct": 0.15,
           "turns": 2
         }
-      ]
+      ],
+      "vfx": "slash"
     },
     "uyChanTieuDao": {
       "name": "Uy Chấn Tiêu Dao",
@@ -1377,7 +1391,8 @@
           "chance": 0.25,
           "turns": 1
         }
-      ]
+      ],
+      "vfx": "slash"
     },
     "bachKyKiepDoanh": {
       "name": "Bách Kỵ Kiếp Doanh",
@@ -1385,7 +1400,8 @@
       "target": "random2",
       "mult": 1.3,
       "stat": "voLuc",
-      "effects": []
+      "effects": [],
+      "vfx": "pierce"
     },
     "thanXa": {
       "name": "Thần Xạ",
@@ -1399,7 +1415,8 @@
           "chance": 0.2,
           "turns": 1
         }
-      ]
+      ],
+      "vfx": "arrows"
     },
     "loaYDau": {
       "name": "Lõa Y Đấu",
@@ -1413,7 +1430,8 @@
           "pct": 0.2,
           "turns": 2
         }
-      ]
+      ],
+      "vfx": "slash"
     },
     "tuNgoKyMuu": {
       "name": "Tử Ngọ Kỳ Mưu",
@@ -1421,7 +1439,8 @@
       "target": "random2",
       "mult": 1.2,
       "stat": "voLuc",
-      "effects": []
+      "effects": [],
+      "vfx": "pierce"
     },
     "haBacManhTuong": {
       "name": "Hà Bắc Mãnh Tướng",
@@ -1429,7 +1448,8 @@
       "target": "single",
       "mult": 1.7,
       "stat": "voLuc",
-      "effects": []
+      "effects": [],
+      "vfx": "slash"
     },
     "beNguyet": {
       "name": "Bế Nguyệt",
@@ -1443,7 +1463,8 @@
           "chance": 0.25,
           "turns": 1
         }
-      ]
+      ],
+      "vfx": "charm"
     },
     "dotKich": {
       "name": "Đột Kích",
@@ -1451,7 +1472,8 @@
       "target": "single",
       "mult": 1.5,
       "stat": "voLuc",
-      "effects": []
+      "effects": [],
+      "vfx": "pierce"
     },
     "muaTen": {
       "name": "Mưa Tên",
@@ -1459,7 +1481,8 @@
       "target": "random2",
       "mult": 0.9,
       "stat": "voLuc",
-      "effects": []
+      "effects": [],
+      "vfx": "arrows"
     },
     "kienThu": {
       "name": "Kiên Thủ",
@@ -1473,7 +1496,8 @@
           "pct": 0.1,
           "self": true
         }
-      ]
+      ],
+      "vfx": "slash"
     },
     "hoaTien": {
       "name": "Hỏa Tiễn",
@@ -1487,7 +1511,8 @@
           "pct": 0.25,
           "turns": 2
         }
-      ]
+      ],
+      "vfx": "fire"
     },
     "sonTacDao": {
       "name": "Loạn Đao",
@@ -1495,7 +1520,8 @@
       "target": "random2",
       "mult": 1,
       "stat": "voLuc",
-      "effects": []
+      "effects": [],
+      "vfx": "slash"
     },
     "yeuThuat": {
       "name": "Yêu Thuật Thái Bình",
@@ -1509,7 +1535,8 @@
           "pct": 0.3,
           "turns": 2
         }
-      ]
+      ],
+      "vfx": "thunder"
     }
   },
   "troopTypes": {

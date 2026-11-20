@@ -419,7 +419,7 @@ function heroSheet(uid) {
     </div>
     <div class="panel">
       <div class="row"><b>${esc(sk.name)}</b><span class="chip num">Cấp ${h.skillLv}/${skMax}</span></div>
-      <p class="muted">${esc(sk.desc)} Kích hoạt khi khí đạt 100. Mỗi cấp +8% sức mạnh.</p>
+      <p class="muted">${esc(sk.desc)} Tung ra khi sĩ khí đạt 100 (đánh thường +${BAL.combat.khiPerAttack}, bị đánh +${BAL.combat.khiPerHit}, vào trận có sẵn ${BAL.combat.khiStart}). Mỗi cấp +8% sức mạnh.</p>
       <div class="row" style="margin-top:6px">${costHtml(skCost)}<span class="spacer"></span><button class="btn small" data-act="skillUp" data-uid="${uid}" ${h.skillLv < skMax ? '' : 'disabled'}>Lĩnh ngộ</button></div>
     </div>
     <div style="display:flex;flex-direction:column;gap:6px"><b>Trang bị</b>${eqRows}</div>
@@ -605,7 +605,18 @@ function updateTimers() {
 }
 
 // ---------- trận đánh ----------
-const battle = { timer: null, speed: 1, data: null, idx: 0, units: {}, finished: false };
+const battle = { timer: null, speed: 1, data: null, idx: 0, units: {}, finished: false, pending: [] };
+
+// Hẹn giờ trong một sự kiện (theo tốc độ phát lại); bỏ qua trận thì hủy hết
+function later(fn, ms) {
+  const id = setTimeout(fn, ms / battle.speed);
+  battle.pending.push(id);
+  return id;
+}
+function clearPending() {
+  battle.pending.forEach(clearTimeout);
+  battle.pending = [];
+}
 
 function unitLook(u) {
   if (u.look.kind === 'hero') return heroImg(u.look.tid, u.look.type);
@@ -627,22 +638,28 @@ function unitPos(side, slot) {
 }
 
 function openBattle(r) {
+  clearPending();
   battle.data = r;
   battle.idx = 0;
   battle.finished = false;
   battle.units = {};
+  const khi0 = r.result.khiStart ?? 0;
   const unitHtml = (u, side) => {
     const uid = `${side}${u.slot}`;
     const p = unitPos(side, u.slot);
-    battle.units[uid] = { name: u.name, troops: u.troops, max: u.maxTroops, ranged: TROOP_TYPES[u.type].range === 'ranged', type: u.type, ...p };
+    battle.units[uid] = { name: u.name, side, troops: u.troops, max: u.maxTroops, khi: khi0, hasSkill: !!u.skill, ranged: TROOP_TYPES[u.type].range === 'ranged', type: u.type, ...p };
     return `<div class="unit ${side === 'B' ? 'enemy' : ''}" id="u-${uid}" style="left:${p.x * 100}%;top:${p.y * 100}%;width:${21 * p.s}%;z-index:${Math.round(p.y * 100)}">
-      ${img(unitLook(u))}<span class="uname disp">${esc(u.name)}</span>${bar(u.troops, u.maxTroops, side === 'A' ? 'green' : 'red')}<span class="cnt num disp" data-cnt>${fmt(u.troops)}</span></div>`;
+      <span class="ring"></span>${img(unitLook(u))}<span class="uname disp">${esc(u.name)}</span>
+      ${bar(u.troops, u.maxTroops, side === 'A' ? 'green' : 'red')}
+      ${u.skill ? `<div class="khi-bar" title="Sĩ khí"><i style="width:${Math.min(100, khi0)}%"></i></div>` : ''}
+      <span class="cnt num disp" data-cnt>${fmt(u.troops)}</span></div>`;
   };
   const el = $('#battle');
   el.hidden = false;
   el.innerHTML = `<div class="battle-inner">
     <div class="row"><span class="disp" style="font-size:18px">Ải ${r.stageId}</span><span class="spacer"></span><span class="round-tag disp" id="b-round">Hiệp 1</span></div>
-    <div class="field" id="b-field"><div class="ground"></div>${r.enemies.map((u) => unitHtml(u, 'B')).join('')}${r.team.map((u) => unitHtml(u, 'A')).join('')}</div>
+    <div class="field" id="b-field"><div class="ground"></div><div class="dim"></div>${r.enemies.map((u) => unitHtml(u, 'B')).join('')}${r.team.map((u) => unitHtml(u, 'A')).join('')}</div>
+    <p class="legend"><span class="lg-troop"></span>Binh lực <span class="lg-khi"></span>Sĩ khí: đầy 100 thì đến lượt sẽ tung chiến pháp</p>
     <div id="b-result"></div>
     <div class="blog" id="b-log"></div>
     <div class="row" id="b-ctrl"><button class="btn small ghost" data-act="bSpeed">Tốc độ ×${battle.speed}</button><span class="spacer"></span><button class="btn small gold" data-act="bSkip">Bỏ qua</button></div>
@@ -650,42 +667,45 @@ function openBattle(r) {
   stepBattle();
 }
 
+function unitEl(uid) {
+  return document.getElementById(`u-${uid}`);
+}
+function fieldEl() {
+  return document.getElementById('b-field');
+}
+/** Tâm thân người (px trong khung chiến trường) */
 function fieldPx(uid) {
-  const f = document.getElementById('b-field');
+  const f = fieldEl();
   const u = battle.units[uid];
   if (!f || !u) return null;
-  return { x: u.x * f.clientWidth, y: u.y * f.clientHeight - 0.09 * f.clientWidth * u.s };
+  return { x: u.x * f.clientWidth, y: u.y * f.clientHeight - 0.11 * f.clientWidth * u.s, s: u.s };
 }
-function lunge(fromUid, toUid) {
-  const a = fieldPx(fromUid);
-  const b = fieldPx(toUid);
-  const el = document.getElementById(`u-${fromUid}`);
-  if (!a || !b || !el || !el.animate) return;
-  const dx = (b.x - a.x) * 0.35;
-  const dy = (b.y - a.y) * 0.35;
-  el.animate([{ translate: '0 0' }, { translate: `${dx}px ${dy}px` }, { translate: '0 0' }], { duration: 300 / battle.speed, easing: 'ease-out' });
+
+function setTroops(uid, left) {
+  const st = battle.units[uid];
+  if (!st) return;
+  st.troops = Math.max(0, left);
+  const u = unitEl(uid);
+  if (!u) return;
+  u.querySelector('.bar i').style.width = `${(st.troops / Math.max(1, st.max)) * 100}%`;
+  u.querySelector('[data-cnt]').textContent = fmt(st.troops);
+  u.classList.toggle('dead', st.troops <= 0);
+  if (st.troops <= 0) u.classList.remove('ready', 'stunned');
 }
-function shoot(fromUid, toUid, orb) {
-  const a = fieldPx(fromUid);
-  const b = fieldPx(toUid);
-  const f = document.getElementById('b-field');
-  if (!a || !b || !f) return;
-  const s = document.createElement('span');
-  s.className = `shot${orb ? ' orb' : ''}`;
-  s.style.left = `${a.x}px`;
-  s.style.top = `${a.y}px`;
-  f.appendChild(s);
-  const ang = (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
-  const anim = s.animate?.([
-    { transform: `translate(-50%,-50%) rotate(${ang}deg)` },
-    { transform: `translate(calc(${b.x - a.x}px - 50%), calc(${b.y - a.y}px - 50%)) rotate(${ang}deg)` },
-  ], { duration: 280 / battle.speed, easing: 'ease-in' });
-  if (anim) anim.onfinish = () => s.remove();
-  else s.remove();
+
+function setKhi(uid, v) {
+  const st = battle.units[uid];
+  if (!st) return;
+  st.khi = v;
+  const u = unitEl(uid);
+  const barEl = u?.querySelector('.khi-bar i');
+  if (!barEl) return; // không có chiến pháp thì không hiện sĩ khí
+  barEl.style.width = `${Math.max(0, Math.min(100, v))}%`;
+  u.classList.toggle('ready', v >= 100 && st.troops > 0);
 }
 
 function floatAt(uid, text, cls = '') {
-  const u = document.getElementById(`u-${uid}`);
+  const u = unitEl(uid);
   if (!u) return;
   const f = document.createElement('span');
   f.className = `float ${cls}`;
@@ -693,16 +713,7 @@ function floatAt(uid, text, cls = '') {
   u.appendChild(f);
   setTimeout(() => f.remove(), 900);
 }
-function setTroops(uid, left) {
-  const st = battle.units[uid];
-  if (!st) return;
-  st.troops = Math.max(0, left);
-  const u = document.getElementById(`u-${uid}`);
-  if (!u) return;
-  u.querySelector('.bar i').style.width = `${(st.troops / Math.max(1, st.max)) * 100}%`;
-  u.querySelector('[data-cnt]').textContent = fmt(st.troops);
-  u.classList.toggle('dead', st.troops <= 0);
-}
+
 function logLine(html) {
   const box = $('#b-log');
   if (!box) return;
@@ -711,7 +722,171 @@ function logLine(html) {
   box.appendChild(p);
   box.scrollTop = box.scrollHeight;
 }
-const FX_LABEL = { stun: 'Choáng', poison: 'Thiêu đốt', defDown: 'Giảm phòng', atkDown: 'Giảm công', khiDrain: 'Mất khí', buffAtk: 'Tăng công' };
+
+function showBanner(text, cls = '', sub = '') {
+  const f = fieldEl();
+  if (!f) return;
+  f.querySelector('.banner')?.remove();
+  const b = document.createElement('div');
+  b.className = `banner ${cls}`;
+  b.innerHTML = sub ? `<small class="disp">${esc(sub)}</small><span class="disp">${esc(text)}</span>` : `<span class="disp">${esc(text)}</span>`;
+  f.appendChild(b);
+  if (cls !== 'win' && cls !== 'lose') setTimeout(() => b.remove(), 950 / battle.speed);
+}
+
+// ---------- Hiệu ứng hình ----------
+
+/** Tạo một phần tử hiệu ứng tại (x, y) trong khung, tự xóa sau `life` ms */
+function fx(cls, x, y, { life = 900, style = '', html = '' } = {}) {
+  const f = fieldEl();
+  if (!f) return null;
+  const e = document.createElement('div');
+  e.className = `vfx ${cls}`;
+  e.style.cssText = `left:${x}px;top:${y}px;--spd:${battle.speed};${style}`;
+  if (html) e.innerHTML = html;
+  f.appendChild(e);
+  setTimeout(() => e.remove(), life / battle.speed + 50);
+  return e;
+}
+
+function lunge(fromUid, toUid, amount = 0.35) {
+  const a = fieldPx(fromUid);
+  const b = fieldPx(toUid);
+  const el = unitEl(fromUid);
+  if (!a || !b || !el || !el.animate) return;
+  el.animate([{ translate: '0 0' }, { translate: `${(b.x - a.x) * amount}px ${(b.y - a.y) * amount}px` }, { translate: '0 0' }], { duration: 320 / battle.speed, easing: 'ease-out' });
+}
+
+function shoot(fromUid, toUid, kind = 'arrow') {
+  const a = fieldPx(fromUid);
+  const b = fieldPx(toUid);
+  const f = fieldEl();
+  if (!a || !b || !f) return;
+  const s = document.createElement('span');
+  s.className = `shot ${kind}`;
+  s.style.left = `${a.x}px`;
+  s.style.top = `${a.y}px`;
+  f.appendChild(s);
+  const ang = (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
+  const anim = s.animate?.([
+    { transform: `translate(-50%,-50%) rotate(${ang}deg)` },
+    { transform: `translate(calc(${b.x - a.x}px - 50%), calc(${b.y - a.y}px - 50%)) rotate(${ang}deg)` },
+  ], { duration: 300 / battle.speed, easing: 'ease-in' });
+  if (anim) anim.onfinish = () => s.remove();
+  else s.remove();
+}
+
+/** Loại hoạt cảnh của chiến pháp: lấy từ cột "Hiệu ứng hình" trong Excel, bỏ trống thì tự đoán */
+function skillVfx(skillId) {
+  const s = SKILLS[skillId];
+  if (!s) return 'slash';
+  if (s.vfx) return s.vfx;
+  const types = s.effects.map((e) => e.type);
+  if (types.includes('poison')) return 'fire';
+  if (types.includes('teamHeal')) return 'heal';
+  if (types.includes('teamBuffAtk')) return 'command';
+  if (types.includes('stun') && s.stat === 'ngoTinh') return 'thunder';
+  if (s.target === 'back' || s.target.startsWith('random')) return s.stat === 'ngoTinh' ? 'thunder' : 'arrows';
+  if (s.target === 'all') return 'whirl';
+  if (s.target === 'row') return 'slash';
+  return 'pierce';
+}
+
+const VFX_PLAY = {
+  slash(a, targets) {
+    for (const t of targets) {
+      fx('fx-slash', t.x, t.y, { style: `--rot:${-30 + Math.random() * 60}deg;--sz:${130 * t.s}px` });
+      fx('fx-impact', t.x, t.y, { style: `--sz:${70 * t.s}px;animation-delay:${120 / battle.speed}ms` });
+    }
+  },
+  pierce(a, targets) {
+    for (const t of targets) {
+      const dx = t.x - a.x;
+      const dy = t.y - a.y;
+      fx('fx-pierce', a.x, a.y, { life: 500, style: `width:${Math.hypot(dx, dy)}px;--rot:${(Math.atan2(dy, dx) * 180) / Math.PI}deg` });
+      fx('fx-impact', t.x, t.y, { style: `--sz:${70 * t.s}px` });
+    }
+  },
+  arrows(a, targets) {
+    for (const t of targets) {
+      for (let i = 0; i < 6; i++) {
+        fx('fx-arrow', t.x + (Math.random() - 0.5) * 50 * t.s, t.y - 10, { life: 700, style: `animation-delay:${(i * 50) / battle.speed}ms` });
+      }
+    }
+  },
+  fire(a, targets) {
+    for (const t of targets) {
+      fx('fx-burst fire', t.x, t.y, { style: `--sz:${110 * t.s}px` });
+      for (let i = 0; i < 4; i++) fx('fx-flame', t.x + (i - 1.5) * 14 * t.s, t.y + 10, { life: 1000, style: `animation-delay:${(i * 60) / battle.speed}ms;--sz:${34 * t.s}px` });
+    }
+  },
+  thunder(a, targets) {
+    const f = fieldEl();
+    fx('fx-flash', f.clientWidth / 2, f.clientHeight / 2, { life: 350 });
+    for (const t of targets) {
+      fx('fx-bolt', t.x, t.y, { life: 500, style: `height:${t.y + 20}px` });
+      fx('fx-impact thunder', t.x, t.y, { style: `--sz:${80 * t.s}px` });
+    }
+  },
+  formation(a, targets) {
+    if (!targets.length) return;
+    const cx = targets.reduce((s, t) => s + t.x, 0) / targets.length;
+    const cy = targets.reduce((s, t) => s + t.y, 0) / targets.length;
+    fx('fx-formation', cx, cy + 20, { life: 1100 });
+    for (const t of targets) fx('fx-whirl small', t.x, t.y, { life: 800, style: `--sz:${70 * t.s}px` });
+  },
+  roar(a, targets) {
+    for (let i = 0; i < 3; i++) fx('fx-wave', a.x, a.y, { life: 800, style: `animation-delay:${(i * 120) / battle.speed}ms` });
+    for (const t of targets) fx('fx-impact', t.x, t.y, { style: `--sz:${60 * t.s}px` });
+  },
+  charm(a, targets) {
+    for (const t of targets) {
+      for (let i = 0; i < 6; i++) fx('fx-petal', t.x + (Math.random() - 0.5) * 60 * t.s, t.y + (Math.random() - 0.5) * 30, { life: 1000, style: `animation-delay:${(i * 60) / battle.speed}ms;--rot:${Math.random() * 360}deg` });
+    }
+  },
+  command(a, targets, allies) {
+    fx('fx-wave gold', a.x, a.y, { life: 800 });
+    for (const t of allies) fx('fx-aura', t.x, t.y + 30, { life: 1000, style: `--sz:${90 * t.s}px` });
+    VFX_PLAY.slash(a, targets);
+  },
+  heal(a, targets, allies) {
+    for (const t of allies) {
+      fx('fx-aura heal', t.x, t.y + 30, { life: 1000, style: `--sz:${90 * t.s}px` });
+      for (let i = 0; i < 4; i++) fx('fx-plus', t.x + (i - 1.5) * 12 * t.s, t.y + 10, { life: 900, style: `animation-delay:${(i * 80) / battle.speed}ms` });
+    }
+    VFX_PLAY.slash(a, targets);
+  },
+  whirl(a, targets) {
+    for (const t of targets) fx('fx-whirl', t.x, t.y, { life: 800, style: `--sz:${100 * t.s}px` });
+  },
+};
+
+const FX_LABEL = { stun: 'Choáng', poison: 'Thiêu đốt', defDown: 'Giảm phòng', atkDown: 'Giảm công', khiDrain: 'Mất sĩ khí', buffAtk: 'Tăng công' };
+
+function applyHits(ev, animate) {
+  for (const hit of ev.hits) {
+    setTroops(hit.d, hit.left);
+    if (animate) {
+      floatAt(hit.d, `-${fmt(hit.kills)}`, hit.crit ? 'crit' : '');
+      const t = unitEl(hit.d);
+      if (t) {
+        t.classList.remove('hit');
+        void t.offsetWidth;
+        t.classList.add('hit');
+      }
+    }
+  }
+  for (const f of ev.fx) {
+    if (f.type === 'heal') {
+      setTroops(f.u, f.left);
+      if (animate) floatAt(f.u, `+${fmt(f.amount)}`, 'heal');
+      continue;
+    }
+    if (f.type === 'stun') unitEl(f.u)?.classList.add('stunned');
+    if (animate) floatAt(f.u, FX_LABEL[f.type] || f.type, 'fx');
+  }
+  for (const [uid, v] of Object.entries(ev.khi || {})) setKhi(uid, v);
+}
 
 function applyEvent(ev, animate) {
   const name = (uid) => esc(battle.units[uid]?.name || '?');
@@ -719,63 +894,74 @@ function applyEvent(ev, animate) {
     const r = $('#b-round');
     if (r) r.textContent = `Hiệp ${ev.n}`;
     if (animate) logLine(`<span class="muted">— Hiệp ${ev.n} —</span>`);
-  } else if (ev.t === 'act') {
-    if (animate) {
-      const actor = battle.units[ev.a];
-      const first = ev.hits[0]?.d;
-      if (ev.kind === 'skill') {
-        showBanner(`${actor.name}: ${ev.skill}`);
-        for (const h of ev.hits) shoot(ev.a, h.d, true);
-      } else if (first) {
-        if (actor?.ranged) shoot(ev.a, first, actor.type === 'muu');
-        else lunge(ev.a, first);
-      }
-    }
-    for (const hit of ev.hits) {
-      setTroops(hit.d, hit.left);
-      if (animate) {
-        floatAt(hit.d, `-${fmt(hit.kills)}`, hit.crit ? 'crit' : '');
-        const t = document.getElementById(`u-${hit.d}`);
-        if (t) {
-          t.classList.remove('hit');
-          void t.offsetWidth;
-          t.classList.add('hit');
-        }
-      }
-    }
-    for (const fx of ev.fx) {
-      if (fx.type === 'heal') {
-        setTroops(fx.u, fx.left);
-        if (animate) floatAt(fx.u, `+${fmt(fx.amount)}`, 'heal');
-      } else if (animate) floatAt(fx.u, FX_LABEL[fx.type] || fx.type, 'fx');
-    }
-    if (animate) {
-      const hits = ev.hits.map((h) => `${name(h.d)} -${fmt(h.kills)}${h.crit ? ' (bạo kích)' : ''}`).join(', ');
-      logLine(`${name(ev.a)} ${ev.kind === 'skill' ? `dùng <b style="color:var(--red-dk)">${esc(ev.skill)}</b>` : 'tấn công'}${hits ? `: ${hits}` : ''}`);
-    }
-  } else if (ev.t === 'poison') {
+    return;
+  }
+  if (ev.t === 'poison') {
     setTroops(ev.u, ev.left);
     if (animate) {
+      const p = fieldPx(ev.u);
+      if (p) fx('fx-flame', p.x, p.y + 10, { life: 700, style: `--sz:${30 * p.s}px` });
       floatAt(ev.u, `-${fmt(ev.kills)}`, 'poison');
       logLine(`${name(ev.u)} bị thiêu đốt -${fmt(ev.kills)}`);
     }
-  } else if (ev.t === 'stun') {
+    return;
+  }
+  if (ev.t === 'stun') {
+    unitEl(ev.u)?.classList.remove('stunned');
     if (animate) {
       floatAt(ev.u, 'Choáng', 'fx');
       logLine(`${name(ev.u)} bị choáng, mất lượt`);
     }
+    return;
   }
-}
+  if (ev.t !== 'act') return;
 
-function showBanner(text, cls = '') {
-  const f = document.getElementById('b-field');
-  if (!f) return;
-  f.querySelector('.banner')?.remove();
-  const b = document.createElement('div');
-  b.className = `banner disp ${cls}`;
-  b.textContent = text;
-  f.appendChild(b);
-  if (!cls) setTimeout(() => b.remove(), 900 / battle.speed);
+  const logIt = () => {
+    const hits = ev.hits.map((h) => `${name(h.d)} -${fmt(h.kills)}${h.crit ? ' (bạo kích)' : ''}`).join(', ');
+    logLine(`${name(ev.a)} ${ev.kind === 'skill' ? `dùng <b style="color:var(--red-dk)">${esc(ev.skill)}</b>` : 'tấn công'}${hits ? `: ${hits}` : ''}`);
+  };
+  if (!animate) {
+    applyHits(ev, false);
+    return;
+  }
+
+  const actor = battle.units[ev.a];
+  if (ev.kind !== 'skill') {
+    const first = ev.hits[0]?.d;
+    if (first) {
+      if (actor?.ranged) shoot(ev.a, first, actor.type === 'muu' ? 'orb' : 'arrow');
+      else lunge(ev.a, first);
+    }
+    later(() => applyHits(ev, true), actor?.ranged ? 280 : 160);
+    logIt();
+    return;
+  }
+
+  // Chiến pháp: tụ khí → tên chiêu → hoạt cảnh → trúng đòn
+  const f = fieldEl();
+  const el = unitEl(ev.a);
+  const a = fieldPx(ev.a);
+  f?.classList.add('casting');
+  el?.classList.add('caster');
+  setKhi(ev.a, Math.max(0, (actor?.khi ?? 100) - 100));
+  if (a) fx('fx-charge', a.x, a.y + 26 * a.s, { life: 700, style: `--sz:${110 * a.s}px` });
+  showBanner(ev.skill, actor?.side === 'A' ? 'skill' : 'skill enemy', actor?.name);
+  logIt();
+  later(() => {
+    const kind = skillVfx(ev.skillId);
+    const targets = ev.hits.map((h) => fieldPx(h.d)).filter(Boolean);
+    const allyIds = ev.fx.filter((x) => x.type === 'heal' || x.type === 'buffAtk').map((x) => x.u);
+    const allies = [...new Set(allyIds)].map((u) => fieldPx(u)).filter(Boolean);
+    if (a) {
+      if (!actor.ranged && ev.hits[0] && !['roar', 'command', 'heal', 'formation', 'thunder'].includes(kind)) lunge(ev.a, ev.hits[0].d, 0.45);
+      (VFX_PLAY[kind] ?? VFX_PLAY.slash)(a, targets, allies);
+    }
+  }, 450);
+  later(() => applyHits(ev, true), 760);
+  later(() => {
+    f?.classList.remove('casting');
+    el?.classList.remove('caster');
+  }, 1050);
 }
 
 function stepBattle() {
@@ -785,7 +971,7 @@ function stepBattle() {
   const ev = log[battle.idx++];
   if (ev.t === 'end') return finishBattle();
   applyEvent(ev, true);
-  const delay = ev.t === 'round' ? 200 : ev.t === 'act' && ev.kind === 'skill' ? 800 : 480;
+  const delay = ev.t === 'round' ? 220 : ev.t === 'act' && ev.kind === 'skill' ? 1450 : ev.t === 'act' ? 560 : 420;
   battle.timer = setTimeout(stepBattle, delay / battle.speed);
 }
 
@@ -793,13 +979,18 @@ function finishBattle() {
   clearTimeout(battle.timer);
   if (battle.finished) return;
   battle.finished = true;
+  clearPending();
   const log = battle.data.result.log;
+  // Sự kiện đang phát dở: áp lại cho chắc (các giá trị là tuyệt đối nên áp lại không sai)
+  if (battle.idx > 0) applyEvent(log[battle.idx - 1], false);
   while (battle.idx < log.length) applyEvent(log[battle.idx++], false);
+  fieldEl()?.classList.remove('casting');
+  document.querySelectorAll('.unit.caster, .unit.stunned').forEach((u) => u.classList.remove('caster', 'stunned'));
   const r = battle.data;
   const win = r.result.win;
-  showBanner(win ? 'Đại thắng!' : 'Thất bại', win ? 'win' : '');
+  showBanner(win ? 'Đại thắng!' : 'Thất bại', win ? 'win' : 'lose');
   $('#b-result').innerHTML = `<div class="panel ${win ? 'hi' : ''}" style="display:flex;flex-direction:column;gap:6px">
-    <div class="row"><b style="font-size:16px;color:${win ? 'var(--gold)' : 'var(--red)'}">${win ? 'Thắng' : 'Thua'}</b>${win ? `<span class="stars">${[1, 2, 3].map((n) => (n <= r.stars ? '★' : '<span class="off">★</span>')).join('')}</span>` : ''}<span class="spacer"></span><span class="muted">${r.result.rounds} hiệp · tổn thất ${Math.round(r.result.lossRatio * 100)}% quân</span></div>
+    <div class="row"><b style="font-size:16px;color:${win ? 'var(--gold-dk)' : 'var(--red)'}">${win ? 'Thắng' : 'Thua'}</b>${win ? `<span class="stars">${[1, 2, 3].map((n) => (n <= r.stars ? '★' : '<span class="off">★</span>')).join('')}</span>` : ''}<span class="spacer"></span><span class="muted">${r.result.rounds} hiệp · tổn thất ${Math.round(r.result.lossRatio * 100)}% quân</span></div>
     ${win ? `<div class="row wrap">${rewardHtml(r.rewards)}</div>` : `<p class="muted">Gợi ý: nâng cấp võ tướng, nghiên cứu bậc binh chủng, đổi hệ để khắc chế địch (${[...new Set(r.enemies.map((e) => TROOP_TYPES[e.type].name))].join(', ')}).</p>`}
     ${r.levels ? `<p style="color:var(--green-dk)">Chúa Công lên cấp ${S.player.level}!</p>` : ''}
   </div>`;
@@ -808,6 +999,7 @@ function finishBattle() {
 
 function closeBattle() {
   clearTimeout(battle.timer);
+  clearPending();
   battle.data = null;
   const el = $('#battle');
   el.hidden = true;

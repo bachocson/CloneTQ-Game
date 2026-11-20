@@ -58,6 +58,28 @@ Mỗi ô một hiệu ứng, dạng `loại tham_số=giá_trị ...`:
 
 Mục tiêu: `mot_muc_tieu`, `hang_truoc`, `hang_sau`, `toan_bo`, `ngau_nhien_2`, `ngau_nhien_3`, `it_quan_nhat`.
 
+### Hiệu ứng hình (hoạt cảnh khi tung chiêu)
+
+Cột **Hiệu ứng hình** chỉ đổi hình ảnh, không ảnh hưởng sức mạnh. Bỏ trống thì game tự chọn theo mục tiêu và hiệu ứng của chiêu.
+
+| Giá trị | Hình ảnh |
+|---|---|
+| `chem` | Vệt chém trắng vào từng mục tiêu |
+| `dam_xuyen` | Vệt đâm thẳng từ tướng tới mục tiêu |
+| `mua_ten` | Mưa tên rơi xuống mục tiêu |
+| `hoa_cong` | Nổ lửa và ngọn lửa bốc lên |
+| `sam_set` | Chớp sáng toàn màn hình, sét đánh xuống |
+| `tran_phap` | Trận đồ vàng xoay trên mặt đất dưới quân địch |
+| `gam_thet` | Sóng âm lan ra từ tướng |
+| `me_hoac` | Cánh hoa hồng bay quanh mục tiêu |
+| `hieu_lenh` | Sóng vàng và hào quang trên quân mình |
+| `hoi_phuc` | Hào quang xanh và dấu cộng bay lên trên quân mình |
+| `loc_xoay` | Vòng xoáy quanh mục tiêu |
+
+### Sĩ khí
+
+Mỗi tướng có chiến pháp hiện một thanh vàng **sĩ khí** dưới thanh binh lực. Vào trận có sẵn `balance.combat.khiStart`, mỗi lần đánh thường cộng `khiPerAttack`, mỗi lần bị đánh cộng `khiPerHit`. Đầy 100 thì thanh sáng lên, hiện chữ **SẴN SÀNG**, và đến lượt tướng đó sẽ tung chiến pháp.
+
 ## Lỡ làm hỏng file Excel?
 
 - Lấy lại bản trên GitHub, hoặc

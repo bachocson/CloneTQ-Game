@@ -42,13 +42,15 @@ export interface Hit { d: string; kills: number; crit: boolean; left: number }
 export interface Fx { u: string; type: string; amount?: number; left?: number }
 export type BattleEvent =
   | { t: 'round'; n: number }
-  | { t: 'act'; a: string; kind: 'atk' | 'skill'; skill: string | null; hits: Hit[]; fx: Fx[] }
+  | { t: 'act'; a: string; kind: 'atk' | 'skill'; skill: string | null; skillId?: string; hits: Hit[]; fx: Fx[]; khi: Record<string, number> }
   | { t: 'poison'; u: string; kills: number; left: number }
   | { t: 'stun'; u: string }
   | { t: 'end'; win: boolean };
 
 export interface BattleResult {
   win: boolean;
+  /** sĩ khí lúc vào trận của mỗi đơn vị (UI dùng để vẽ thanh sĩ khí) */
+  khiStart: number;
   rounds: number;
   log: BattleEvent[];
   A: { id: number | string; slot: number; troops: number }[];
@@ -217,7 +219,8 @@ export function simulateBattle(teamA: BattleUnit[], teamB: BattleUnit[], seed: n
       const skill = u.skill ? cfg().skills[u.skill.id] : null;
       const useSkill = !!skill && u.khi >= 100;
       const enemies = enemiesOf(u);
-      const ev: Extract<BattleEvent, { t: 'act' }> = { t: 'act', a: u.uid, kind: useSkill ? 'skill' : 'atk', skill: useSkill && skill ? skill.name : null, hits: [], fx: [] };
+      const ev: Extract<BattleEvent, { t: 'act' }> = { t: 'act', a: u.uid, kind: useSkill ? 'skill' : 'atk', skill: useSkill && skill ? skill.name : null, hits: [], fx: [], khi: {} };
+      if (useSkill && u.skill) ev.skillId = u.skill.id;
 
       if (useSkill && skill && u.skill) {
         u.khi -= 100;
@@ -275,6 +278,12 @@ export function simulateBattle(teamA: BattleUnit[], teamB: BattleUnit[], seed: n
           ev.hits.push({ d: d.uid, kills: hit.kills, crit: hit.crit, left: d.troops });
         }
       }
+      // Ảnh chụp sĩ khí sau đòn đánh của người ra đòn và những người bị đánh
+      ev.khi[u.uid] = u.khi;
+      for (const h of ev.hits) {
+        const t = all.find((x) => x.uid === h.d);
+        if (t) ev.khi[t.uid] = t.khi;
+      }
       log.push(ev);
 
       u.buffs = u.buffs.map((b) => ({ ...b, turns: b.turns - 1 })).filter((b) => b.turns > 0);
@@ -289,6 +298,7 @@ export function simulateBattle(teamA: BattleUnit[], teamB: BattleUnit[], seed: n
   const endA = A.reduce((s, u) => s + Math.max(0, u.troops), 0);
   return {
     win,
+    khiStart: C.khiStart,
     rounds: round,
     log,
     A: A.map((u) => ({ id: u.id, slot: u.slot, troops: Math.max(0, u.troops) })),

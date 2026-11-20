@@ -49,6 +49,10 @@ export const EFFECT_VI: Record<string, string> = {
   choang: 'stun', thieu_dot: 'poison', tang_cong: 'buffAtk', giam_cong: 'atkDown', giam_phong: 'defDown',
   hoi_quan: 'heal', hut_khi: 'khiDrain', ca_doi_tang_cong: 'teamBuffAtk', ca_doi_hoi_quan: 'teamHeal',
 };
+export const VFX_VI: Record<string, string> = {
+  chem: 'slash', dam_xuyen: 'pierce', mua_ten: 'arrows', hoa_cong: 'fire', sam_set: 'thunder', tran_phap: 'formation',
+  gam_thet: 'roar', me_hoac: 'charm', hieu_lenh: 'command', hoi_phuc: 'heal', loc_xoay: 'whirl',
+};
 export const EFFECT_PARAM_VI: Record<string, string> = { ti_le: 'chance', phan_tram: 'pct', so_luot: 'turns', luong: 'amount', ban_than: 'self' };
 
 const enumNote = (m: Record<string, string>) => `Chọn một trong: ${Object.keys(m).join(', ')}`;
@@ -396,12 +400,13 @@ export const SHEETS: SheetSpec[] = [
       { key: 'target', label: 'Mục tiêu', type: 'enum', required: true, enumMap: TARGET_VI, note: enumNote(TARGET_VI), width: 14 },
       { key: 'mult', label: 'Hệ số sát thương', type: 'num', required: true, min: 0 },
       { key: 'stat', label: 'Chỉ số dùng', type: 'enum', required: true, enumMap: STAT_VI, note: enumNote(STAT_VI) },
+      { key: 'vfx', label: 'Hiệu ứng hình', type: 'enum', enumMap: VFX_VI, note: `Hoạt cảnh khi tung chiêu (chỉ là hình ảnh). ${enumNote(VFX_VI)}. Bỏ trống thì game tự chọn.`, width: 14 },
       { key: 'fx1', label: 'Hiệu ứng 1', type: 'text', width: 30 },
       { key: 'fx2', label: 'Hiệu ứng 2', type: 'text', width: 30 },
       { key: 'fx3', label: 'Hiệu ứng 3', type: 'text', width: 30 },
     ],
     toRows: (cfg) => Object.entries(cfg.skills).map(([id, s]) => {
-      const row: Row = { id, name: s.name, desc: s.desc, target: s.target, mult: s.mult, stat: s.stat };
+      const row: Row = { id, name: s.name, desc: s.desc, target: s.target, mult: s.mult, stat: s.stat, vfx: s.vfx };
       s.effects.forEach((e, i) => { row[`fx${i + 1}`] = effectToText(e as unknown as Record<string, unknown>); });
       return row;
     }),

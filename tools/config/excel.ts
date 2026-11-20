@@ -295,6 +295,7 @@ export async function importXlsx(path = XLSX_PATH): Promise<ImportResult> {
           name: r.name as string, desc: (r.desc as string) ?? '', target: r.target as GameConfig['skills'][string]['target'],
           mult: r.mult as number, stat: r.stat as GameConfig['skills'][string]['stat'], effects: effects as unknown as GameConfig['skills'][string]['effects'],
         };
+        if (r.vfx) cfg.skills[r.id as string].vfx = r.vfx as GameConfig['skills'][string]['vfx'];
       }
       continue;
     }

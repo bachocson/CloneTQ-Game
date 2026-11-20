@@ -67,6 +67,9 @@ export interface SkillEffect {
   self?: boolean;
 }
 
+/** Loại hoạt cảnh khi tung chiến pháp (chỉ ảnh hưởng hình ảnh) */
+export type SkillVfx = 'slash' | 'pierce' | 'arrows' | 'fire' | 'thunder' | 'formation' | 'roar' | 'charm' | 'command' | 'heal' | 'whirl';
+
 export interface SkillDef {
   name: string;
   desc: string;
@@ -74,6 +77,7 @@ export interface SkillDef {
   mult: number;
   stat: StatKey;
   effects: SkillEffect[];
+  vfx?: SkillVfx;
 }
 
 export interface TroopDef {
