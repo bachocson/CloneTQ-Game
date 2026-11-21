@@ -53,6 +53,9 @@ export const VFX_VI: Record<string, string> = {
   chem: 'slash', dam_xuyen: 'pierce', mua_ten: 'arrows', hoa_cong: 'fire', sam_set: 'thunder', tran_phap: 'formation',
   gam_thet: 'roar', me_hoac: 'charm', hieu_lenh: 'command', hoi_phuc: 'heal', loc_xoay: 'whirl',
 };
+export const CURRENCY_VI: Record<string, string> = { nguyen_bao: 'nguyenbao', bac: 'bac' };
+export const PACK_CURRENCY_VI: Record<string, string> = { vnd: 'vnd', nguyen_bao: 'nguyenbao', bac: 'bac' };
+export const LIMIT_VI: Record<string, string> = { khong_gioi_han: 'none', moi_ngay: 'daily', moi_tuan: 'weekly', mot_lan: 'once' };
 export const EFFECT_PARAM_VI: Record<string, string> = { ti_le: 'chance', phan_tram: 'pct', so_luot: 'turns', luong: 'amount', ban_than: 'self' };
 
 const enumNote = (m: Record<string, string>) => `Chọn một trong: ${Object.keys(m).join(', ')}`;
@@ -543,6 +546,76 @@ export const SHEETS: SheetSpec[] = [
         if (r.target) cond.target = String(r.target);
         return { id: r.id as string, name: r.name as string, desc: (r.desc as string) ?? '', cond, reward: rowToCost('thuong', r) };
       });
+    },
+  },
+  {
+    name: 'Cửa hàng',
+    kind: 'table',
+    note: 'Vật phẩm bán bằng nguyên bảo hoặc bạc. Mặt hàng: mã tài nguyên, mã vật phẩm, hoặc stamina (thể lực). Thứ tự dòng = thứ tự hiển thị.',
+    columns: () => [
+      { key: 'id', label: 'Mã', type: 'id', required: true, width: 14 },
+      { key: 'name', label: 'Tên', type: 'text', required: true, width: 18 },
+      { key: 'item', label: 'Mặt hàng (mã)', type: 'text', required: true, width: 14 },
+      { key: 'qty', label: 'Số lượng mỗi lần mua', type: 'num', required: true, min: 1 },
+      { key: 'currency', label: 'Trả bằng', type: 'enum', required: true, enumMap: CURRENCY_VI, note: enumNote(CURRENCY_VI) },
+      { key: 'price', label: 'Giá', type: 'num', required: true, min: 0 },
+      { key: 'limit', label: 'Giới hạn', type: 'enum', required: true, enumMap: LIMIT_VI, note: enumNote(LIMIT_VI) },
+      { key: 'limitCount', label: 'Số lần mỗi kỳ', type: 'int', min: 0 },
+      { key: 'reqLevel', label: 'Cần cấp Chúa Công', type: 'int', min: 1 },
+    ],
+    toRows: (cfg) => (cfg.shop ?? []).map((x) => ({ ...x })),
+    apply: (rows, cfg) => {
+      cfg.shop = rows.map((r) => ({
+        id: r.id as string, name: r.name as string, item: r.item as string, qty: r.qty as number,
+        currency: r.currency as 'nguyenbao' | 'bac', price: r.price as number, limit: r.limit as GameConfig['shop'][number]['limit'],
+        limitCount: (r.limitCount as number) ?? 0, reqLevel: (r.reqLevel as number) ?? 1,
+      }));
+    },
+  },
+  {
+    name: 'Gói ưu đãi',
+    kind: 'table',
+    note: 'Gói nhiều món. Trả bằng vnd là tiền thật (cần cổng thanh toán khi phát hành). Thứ tự dòng = thứ tự hiển thị.',
+    columns: (cfg) => [
+      { key: 'id', label: 'Mã', type: 'id', required: true, width: 14 },
+      { key: 'name', label: 'Tên', type: 'text', required: true, width: 18 },
+      { key: 'desc', label: 'Mô tả', type: 'text', width: 30 },
+      { key: 'currency', label: 'Trả bằng', type: 'enum', required: true, enumMap: PACK_CURRENCY_VI, note: enumNote(PACK_CURRENCY_VI) },
+      { key: 'price', label: 'Giá (VND hoặc số nguyên bảo/bạc)', type: 'num', required: true, min: 0 },
+      { key: 'limit', label: 'Giới hạn', type: 'enum', required: true, enumMap: LIMIT_VI, note: enumNote(LIMIT_VI) },
+      { key: 'limitCount', label: 'Số lần mỗi kỳ', type: 'int', min: 0 },
+      { key: 'reqLevel', label: 'Cần cấp Chúa Công', type: 'int', min: 1 },
+      { key: 'badge', label: 'Nhãn nổi bật', type: 'text' },
+      { key: 'color', label: 'Màu', type: 'color', required: true },
+      ...costCols(cfg, 'trong', 'Trong gói'),
+    ],
+    toRows: (cfg) => (cfg.packs ?? []).map(({ contents, ...p }) => ({ ...p, ...costToRow('trong', contents) })),
+    apply: (rows, cfg) => {
+      cfg.packs = rows.map((r) => ({
+        id: r.id as string, name: r.name as string, desc: (r.desc as string) ?? '', currency: r.currency as 'vnd' | 'nguyenbao' | 'bac',
+        price: r.price as number, limit: r.limit as GameConfig['packs'][number]['limit'], limitCount: (r.limitCount as number) ?? 0,
+        reqLevel: (r.reqLevel as number) ?? 1, badge: (r.badge as string) ?? '', color: r.color as string, contents: rowToCost('trong', r),
+      }));
+    },
+  },
+  {
+    name: 'Gói nạp',
+    kind: 'table',
+    note: 'Gói nạp nguyên bảo bằng tiền thật. Thưởng lần đầu: nguyên bảo cộng thêm ở lần nạp đầu tiên của gói đó.',
+    columns: () => [
+      { key: 'id', label: 'Mã', type: 'id', required: true, width: 12 },
+      { key: 'name', label: 'Tên', type: 'text', required: true, width: 18 },
+      { key: 'price', label: 'Giá (VND)', type: 'int', required: true, min: 0, width: 12 },
+      { key: 'nguyenbao', label: 'Nguyên bảo nhận', type: 'int', required: true, min: 1 },
+      { key: 'firstBonus', label: 'Thưởng lần đầu', type: 'int', min: 0 },
+      { key: 'badge', label: 'Nhãn nổi bật', type: 'text' },
+    ],
+    toRows: (cfg) => (cfg.topups ?? []).map((x) => ({ ...x })),
+    apply: (rows, cfg) => {
+      cfg.topups = rows.map((r) => ({
+        id: r.id as string, name: r.name as string, price: r.price as number, nguyenbao: r.nguyenbao as number,
+        firstBonus: (r.firstBonus as number) ?? 0, badge: (r.badge as string) ?? '',
+      }));
     },
   },
 ];

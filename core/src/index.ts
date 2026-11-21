@@ -10,3 +10,4 @@ export * from './campaign.js';
 export * from './meta.js';
 export * from './battle.js';
 export * from './cheats.js';
+export * from './shop.js';

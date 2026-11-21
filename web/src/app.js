@@ -205,46 +205,176 @@ function viewCity() {
     <div class="bld-list">${list}</div>`;
 }
 
-function buildingSheet(id) {
+// Chức năng mở ra khi chạm vào công trình (tab đầu tiên của bảng công trình)
+const BUILDING_FEATURE = {
+  chinhDien: ['Tổng quan', () => viewOverview()],
+  tuuLau: ['Chiêu mộ', () => viewTavern()],
+  loRen: ['Rèn đồ', () => viewForge()],
+  luyenVo: ['Luyện binh', () => viewTrain()],
+  tangKinh: ['Chiến pháp', () => viewSkills()],
+  tienTrang: ['Chợ', () => shopItemsHtml()],
+  khoHang: ['Kho', () => viewStorage()],
+};
+
+function upgradePanel(id) {
   const b = BUILDINGS[id];
   const lv = S.buildings[id] || 0;
   const q = S.queue;
   const to = lv + 1;
   const chk = G.upgradeCheck(S, id);
-  const locked = S.player.level < b.unlockLevel;
-  let action;
   if (q && q.id === id) {
     const total = (q.endsAt - q.startedAt) / 1000;
     const left = (q.endsAt - now()) / 1000;
     const cost = G.speedUpCost(S, now());
-    action = `<div class="panel hi" style="display:flex;flex-direction:column;gap:6px">
+    return `<div class="panel hi" style="display:flex;flex-direction:column;gap:6px">
       <div class="row"><b>Đang lên cấp ${q.toLevel}</b><span class="spacer"></span><span class="num" data-timer="${q.endsAt}">${fmtTime(left)}</span></div>
       <div data-progress="${q.startedAt}|${q.endsAt}">${bar(total - left, total, 'green')}</div>
       <button class="btn gold" data-act="speedUp">${cost ? `Xong ngay · ${cost} ${img(icon('nguyenbao'))}` : 'Xong ngay (miễn phí)'}</button></div>`;
-  } else if (locked) {
-    action = `<div class="panel"><p>Mở khi Chúa Công đạt cấp ${b.unlockLevel}.</p></div>`;
-  } else {
-    action = `<div class="panel" style="display:flex;flex-direction:column;gap:8px">
-      <div class="row"><b>Lên cấp ${to}</b><span class="spacer"></span><span class="muted num">Thời gian ${fmtTime(G.buildingTime(id, to))}</span></div>
-      <p class="muted">${esc(buildingEffect(id, lv))} → <b style="color:var(--green-dk)">${esc(buildingEffect(id, to))}</b></p>
-      ${costHtml(G.buildingCost(id, to))}
-      ${chk.ok ? '' : `<p style="color:var(--red-dk)">${esc(chk.reason)}</p>`}
-      <button class="btn" data-act="upgrade" data-id="${id}" ${chk.ok ? '' : 'disabled'}>${lv ? 'Nâng cấp' : 'Xây dựng'}</button></div>`;
   }
-  const extra = id === 'tuuLau' && lv ? '<button class="btn blue" data-act="goto" data-id="heroes" data-sub="tavern">Vào Tửu Quán</button>'
-    : id === 'luyenVo' && lv ? '<button class="btn blue" data-act="goto" data-id="heroes" data-sub="train">Luyện binh</button>'
-    : id === 'loRen' && lv ? '<button class="btn blue" data-act="goto" data-id="forge">Vào Lò Rèn</button>' : '';
+  if (S.player.level < b.unlockLevel) return `<div class="panel"><p>Mở khi Chúa Công đạt cấp ${b.unlockLevel}.</p></div>`;
+  return `<div class="panel" style="display:flex;flex-direction:column;gap:8px">
+    <div class="row"><b>Lên cấp ${to}</b><span class="spacer"></span><span class="muted num">Thời gian ${fmtTime(G.buildingTime(id, to))}</span></div>
+    <p class="muted">${esc(buildingEffect(id, lv))} → <b style="color:var(--green-dk)">${esc(buildingEffect(id, to))}</b></p>
+    ${costHtml(G.buildingCost(id, to))}
+    ${chk.ok ? '' : `<p style="color:var(--red-dk)">${esc(chk.reason)}</p>`}
+    <button class="btn" data-act="upgrade" data-id="${id}" ${chk.ok ? '' : 'disabled'}>${lv ? 'Nâng cấp' : 'Xây dựng'}</button></div>`;
+}
+
+function buildingSheet(id) {
+  const b = BUILDINGS[id];
+  const lv = S.buildings[id] || 0;
+  const feature = lv > 0 ? BUILDING_FEATURE[id] : null;
+  const tab = feature ? ui.sheet.tab ?? 'feature' : 'upgrade';
+  const canUp = !S.queue && G.upgradeCheck(S, id).ok;
+  const building = S.queue && S.queue.id === id;
+  const tabs = feature ? `<div class="seg">
+      <button class="${tab === 'feature' ? 'on' : ''}" data-act="bldTab" data-id="feature">${feature[0]}</button>
+      <button class="${tab === 'upgrade' ? 'on' : ''}" data-act="bldTab" data-id="upgrade">Nâng cấp${canUp ? ' ▲' : building ? ' …' : ''}</button>
+    </div>` : '';
+  const body = tab === 'feature' && feature ? feature[1]() : `<p>${esc(buildingEffect(id, lv))}</p>${upgradePanel(id)}`;
   return `
     <div class="sheet-head">
       <div class="art" style="background:linear-gradient(#bfe7ff,#8fd15a)">${img(buildingSprite(id, b.roof, lv))}</div>
       <div style="flex:1;min-width:0">
         <div class="row"><h3 style="font-size:20px">${esc(b.name)}</h3><span class="spacer"></span><button class="btn small ghost" data-act="closeSheet">✕</button></div>
-        <span class="chip num">Cấp ${lv}</span>
+        <span class="chip num">Cấp ${lv}</span>${building ? ' <span class="chip">Đang nâng cấp</span>' : ''}
         <p class="muted" style="margin-top:4px">${esc(b.desc)}</p>
       </div>
     </div>
-    <p>${esc(buildingEffect(id, lv))}</p>
-    ${action}${extra}`;
+    ${tabs}${body}`;
+}
+
+function viewOverview() {
+  const cap = G.storageCap(S);
+  const rows = ['luong', 'go', 'sat', 'bac'].map((k) => `<div class="row">${img(icon(k), 'ico')}<span>${RESOURCES[k].name}</span><span class="spacer"></span><span class="num">+${fmt(G.productionPerHour(S, k))}/giờ</span></div>`).join('');
+  const lvls = BUILDING_ORDER.map((id) => `<span class="chip">${esc(BUILDINGS[id].name)} ${S.buildings[id] || 0}</span>`).join(' ');
+  return `<div class="panel" style="display:flex;flex-direction:column;gap:6px"><b>Sản lượng</b>${rows}
+      <div class="row"><span>Sức chứa mỗi loại</span><span class="spacer"></span><span class="num">${fmt(cap)}</span></div>
+      <div class="row"><span>Offline tối đa</span><span class="spacer"></span><span class="num">${BAL.offlineCapHours} giờ</span></div></div>
+    <div class="panel" style="display:flex;flex-direction:column;gap:6px"><b>Công trình</b><div class="row wrap">${lvls}</div></div>`;
+}
+
+function viewStorage() {
+  const cap = G.storageCap(S);
+  return `<div class="panel" style="display:flex;flex-direction:column;gap:8px"><b>Sức chứa ${fmt(cap)} mỗi loại</b>
+    ${['luong', 'go', 'sat', 'bac'].map((k) => `<div style="display:flex;flex-direction:column;gap:2px"><div class="row">${img(icon(k), 'ico')}<span>${RESOURCES[k].name}</span><span class="spacer"></span><span class="num">${fmt(S.res[k])}/${fmt(cap)}</span></div>${bar(S.res[k], cap, S.res[k] >= cap ? 'red' : 'green')}</div>`).join('')}
+    <p class="muted">Kho đầy thì công trình ngừng sinh tài nguyên đó. Phần thưởng và đồ mua thì vẫn nhận vượt kho.</p></div>`;
+}
+
+function viewSkills() {
+  const team = new Set(S.team.filter(Boolean));
+  const list = [...S.heroes].sort((a, b) => (team.has(b.uid) - team.has(a.uid)) || b.level - a.level).map((h) => {
+    const t = HEROES[h.tid];
+    const sk = SKILLS[t.skill];
+    const max = G.skillMaxLevel(S, h);
+    return `<div class="panel" style="display:grid;grid-template-columns:56px minmax(0,1fr);gap:8px;align-items:center">
+      <div class="art-sm" style="background:${FACTIONS[t.faction].color}">${img(heroImg(h.tid, h.troopType))}</div>
+      <div style="display:flex;flex-direction:column;gap:3px;min-width:0">
+        <div class="row"><b>${esc(t.name)}</b><span class="spacer"></span><span class="chip num">${h.skillLv}/${max}</span></div>
+        <span class="muted">${esc(sk.name)}: ${esc(sk.desc)}</span>
+        <div class="row">${h.skillLv < max ? costHtml(G.skillUpgradeCost(h)) : `<span class="muted">Đã tối đa (cần ${esc(BUILDINGS.tangKinh.name)} hoặc tướng cấp cao hơn)</span>`}<span class="spacer"></span>
+          <button class="btn small" data-act="skillUp" data-uid="${h.uid}" ${h.skillLv < max ? '' : 'disabled'}>Lĩnh ngộ</button></div>
+      </div></div>`;
+  }).join('');
+  return `<p class="muted">Cấp ${esc(BUILDINGS.tangKinh.name)} ${S.buildings.tangKinh} cho phép chiến pháp tối đa cấp ${1 + (S.buildings.tangKinh || 0)}.</p>${list}`;
+}
+
+// ---------- Cửa hàng ----------
+const LIMIT_LABEL = { daily: 'hôm nay', weekly: 'tuần này', once: '', none: '' };
+
+function limitText(def) {
+  if (def.limit === 'none') return '';
+  const left = G.remaining(S, def, now());
+  if (def.limit === 'once') return left ? 'Chỉ mua 1 lần' : 'Đã mua';
+  const reset = G.nextReset(def.limit, now());
+  return `Còn ${left}/${def.limitCount} ${LIMIT_LABEL[def.limit]}${left ? '' : ` · làm mới sau <span data-timer="${reset}">${fmtTime((reset - now()) / 1000)}</span>`}`;
+}
+function priceLabel(currency, price) {
+  if (currency === 'vnd') return G.formatVnd(price);
+  return `${img(icon(currency))} ${fmt(price)}`;
+}
+function itemIcon(k) {
+  return icon(k === 'stamina' ? 'stamina' : k);
+}
+
+function shopItemsHtml() {
+  return C.shop.filter((d) => S.player.level >= d.reqLevel).map((d) => {
+    const left = G.remaining(S, d, now());
+    const can10 = left >= 10;
+    return `<div class="panel shop-row">
+      <span class="shop-ico">${img(itemIcon(d.item))}</span>
+      <span style="min-width:0;display:flex;flex-direction:column"><b>${esc(d.name)} ×${fmt(d.qty)}</b><small class="muted">${limitText(d)}</small></span>
+      <span style="display:flex;flex-direction:column;gap:4px;align-items:stretch">
+        <button class="btn small ${d.currency === 'nguyenbao' ? 'gold' : ''}" data-act="buyItem" data-id="${d.id}" data-n="1" ${left ? '' : 'disabled'}>${priceLabel(d.currency, d.price)}</button>
+        ${can10 ? `<button class="btn small ghost" data-act="buyItem" data-id="${d.id}" data-n="10">×10 · ${fmt(d.price * 10)}</button>` : ''}
+      </span></div>`;
+  }).join('') || '<div class="panel"><p class="muted">Chưa có mặt hàng.</p></div>';
+}
+
+function packCard(p) {
+  const chk = G.packCheck(S, p, now());
+  const confirm = ui.confirm === `buy-${p.id}`;
+  const contents = Object.entries(p.contents).map(([k, v]) => `<span class="chip">${img(itemIcon(k))} ${fmt(v)}</span>`).join(' ');
+  const btn = p.currency === 'vnd'
+    ? `<button class="btn gold" data-act="buyReal" data-id="${p.id}" ${chk.ok ? '' : 'disabled'}>${confirm ? 'Chạm lần nữa để nhận (thử)' : G.formatVnd(p.price)}</button>`
+    : `<button class="btn ${p.currency === 'nguyenbao' ? 'gold' : ''}" data-act="buyPack" data-id="${p.id}" ${chk.ok ? '' : 'disabled'}>${priceLabel(p.currency, p.price)}</button>`;
+  return `<div class="pack" style="--pc:${p.color}">
+    <div class="pack-head"><span class="disp">${esc(p.name)}</span>${p.badge ? `<span class="pack-badge disp">${esc(p.badge)}</span>` : ''}</div>
+    <div class="pack-body">
+      ${p.desc ? `<p class="muted">${esc(p.desc)}</p>` : ''}
+      <div class="row wrap">${contents}</div>
+      <div class="row"><small class="muted">${chk.ok ? limitText(p) : esc(chk.reason)}</small><span class="spacer"></span>${btn}</div>
+    </div></div>`;
+}
+
+function topupCard(t) {
+  const first = !S.shop.firstTopup[t.id] && t.firstBonus > 0;
+  const confirm = ui.confirm === `buy-${t.id}`;
+  return `<div class="topup">
+    ${t.badge ? `<span class="pack-badge disp">${esc(t.badge)}</span>` : ''}
+    ${first ? `<span class="first disp">Lần đầu +${fmt(t.firstBonus)}</span>` : ''}
+    <img class="big" src="${icon('nguyenbao')}" alt="">
+    <span class="disp amt">${fmt(t.nguyenbao)}</span>
+    <small>${esc(t.name)}</small>
+    <button class="btn small gold" data-act="buyReal" data-id="${t.id}">${confirm ? 'Chạm lần nữa' : G.formatVnd(t.price)}</button>
+  </div>`;
+}
+
+function viewShop() {
+  const tab = ui.shopTab ?? 'packs';
+  const seg = `<div class="seg">
+    <button class="${tab === 'packs' ? 'on' : ''}" data-act="shopTab" data-id="packs">Ưu đãi</button>
+    <button class="${tab === 'topup' ? 'on' : ''}" data-act="shopTab" data-id="topup">Nạp</button>
+    <button class="${tab === 'items' ? 'on' : ''}" data-act="shopTab" data-id="items">Vật phẩm</button>
+  </div>`;
+  const note = DEV_TOOLS
+    ? '<div class="panel" style="background:#fff3c4"><p><b>Bản thử nghiệm:</b> chưa kết nối cổng thanh toán. Gói giá tiền thật sẽ nhận miễn phí để test (chạm hai lần).</p></div>'
+    : '';
+  let body;
+  if (tab === 'topup') body = `${note}<div class="topups">${C.topups.map(topupCard).join('')}</div><p class="muted">Đã nạp: ${G.formatVnd(S.shop.totalVnd)}${S.shop.testPurchases ? ` (gồm ${S.shop.testPurchases} lần mua thử)` : ''}</p>`;
+  else if (tab === 'items') body = shopItemsHtml();
+  else body = `${note}${C.packs.filter((p) => S.player.level >= p.reqLevel || p.limit !== 'once').map(packCard).join('')}`;
+  return `<h2 class="disp">Cửa hàng</h2>${seg}${body}`;
 }
 
 // ---------- Võ tướng ----------
@@ -285,13 +415,7 @@ function teamRefillCost() {
 }
 
 function viewHeroes() {
-  const seg = `<div class="seg">
-    <button class="${ui.heroTab === 'team' ? 'on' : ''}" data-act="heroTab" data-id="team">Đội hình</button>
-    <button class="${ui.heroTab === 'tavern' ? 'on' : ''}" data-act="heroTab" data-id="tavern">Tửu Quán</button>
-    <button class="${ui.heroTab === 'train' ? 'on' : ''}" data-act="heroTab" data-id="train">Luyện binh</button>
-  </div>`;
-  if (ui.heroTab === 'tavern') return `<h2 class="disp">Võ tướng</h2>${seg}${viewTavern()}`;
-  if (ui.heroTab === 'train') return `<h2 class="disp">Võ tướng</h2>${seg}${viewTrain()}`;
+  const seg = `<div class="row wrap"><button class="btn small blue" data-act="bldTap" data-id="tuuLau" data-tab="feature">Chiêu mộ ở ${esc(BUILDINGS.tuuLau.name)}</button><button class="btn small ghost" data-act="bldTap" data-id="luyenVo" data-tab="feature">Luyện binh ở ${esc(BUILDINGS.luyenVo.name)}</button></div>`;
 
   const used = S.team.filter(Boolean).length;
   const counts = G.factionCounts(S);
@@ -339,10 +463,10 @@ function viewTavern() {
           </div>
         </div>`;
       }).join('')
-    : `<div class="panel"><p class="muted">Tửu lâu đang vắng khách. Làm mới để mời khách mới.</p></div>`;
+    : `<div class="panel"><p class="muted">${esc(BUILDINGS.tuuLau.name)} đang vắng khách. Làm mới để mời khách mới.</p></div>`;
   return `<div class="panel" style="display:flex;flex-direction:column;gap:8px">
       <div class="row"><b>Tửu Quán cấp ${S.buildings.tuuLau}</b><span class="spacer"></span><span class="muted num">Võ tướng ${S.heroes.length}/${G.rosterLimit(S)}</span></div>
-      <p class="muted">Tửu lâu cấp càng cao càng dễ gặp Tông Sư và Võ Thánh.</p>
+      <p class="muted">${esc(BUILDINGS.tuuLau.name)} cấp càng cao càng dễ gặp tướng ${esc(QUALITIES[4].name)} và ${esc(QUALITIES[5].name)}.</p>
       <div class="row wrap">
         <button class="btn small " data-act="tavernRefresh" data-id="free" ${freeIn > 0 ? 'disabled' : ''}>${freeIn > 0 ? `Miễn phí sau <span class="num" data-timer="${S.tavern.nextFree}">${fmtTime(freeIn)}</span>` : 'Làm mới miễn phí'}</button>
         <button class="btn small ghost" data-act="tavernRefresh" data-id="bac">${tv.refreshCostBac} bạc</button>
@@ -505,7 +629,7 @@ function viewCampaign() {
 // ---------- Lò rèn ----------
 function viewForge() {
   const maxT = G.maxForgeTier(S);
-  if (!maxT) return `<h2 class="disp">Lò rèn</h2><div class="panel"><p>Xây <b>Lò Rèn</b> ở Thành trì (cần cấp Chúa Công ${BUILDINGS.loRen.unlockLevel}) để rèn trang bị.</p></div>`;
+  if (!maxT) return `<div class="panel"><p>Xây ${esc(BUILDINGS.loRen.name)} trước (cần cấp Chúa Công ${BUILDINGS.loRen.unlockLevel}).</p></div>`;
   ui.forgeTier = Math.min(Math.max(1, ui.forgeTier), maxT);
   const def = EQUIP_SLOTS[ui.forgeSlot];
   const cost = G.forgeCost(ui.forgeTier);
@@ -522,7 +646,7 @@ function viewForge() {
         <button class="btn small ghost" data-act="sell" data-id="${eq.uid}" ${owner ? 'disabled' : ''}>Bán</button></div>
     </div>`;
   }).join('');
-  return `<h2 class="disp">Lò rèn</h2>
+  return `
     <div class="panel" style="display:flex;flex-direction:column;gap:8px">
       <div class="seg">${Object.entries(EQUIP_SLOTS).map(([k, d]) => `<button class="${ui.forgeSlot === k ? 'on' : ''}" data-act="forgeSlot" data-id="${k}">${d.name}</button>`).join('')}</div>
       <div class="seg">${Array.from({ length: maxT }, (_, i) => `<button class="${ui.forgeTier === i + 1 ? 'on' : ''}" data-act="forgeTier" data-id="${i + 1}">Bậc ${i + 1}</button>`).join('')}</div>
@@ -562,10 +686,10 @@ function viewQuests() {
 function renderNav() {
   const claim = G.claimableCount(S);
   const tabs = [
-    ['city', 'Thành trì', buildingSprite('chinhDien', BUILDINGS.chinhDien.roof, 3), S.queue ? '' : BUILDING_ORDER.some((id) => G.upgradeCheck(S, id).ok) ? '!' : ''],
-    ['heroes', 'Võ tướng', heroImg('quanVu', 'ky'), G.tavernOpen(S) && now() >= S.tavern.nextFree ? '!' : ''],
+    ['city', 'Thành trì', buildingSprite('chinhDien', BUILDINGS.chinhDien.roof, 3), (!S.queue && BUILDING_ORDER.some((id) => G.upgradeCheck(S, id).ok)) || (G.tavernOpen(S) && now() >= S.tavern.nextFree) ? '!' : ''],
+    ['heroes', 'Võ tướng', heroImg('quanVu', 'ky'), ''],
     ['campaign', 'Chinh chiến', heroImg('luBo', 'ky'), S.stamina.cur >= BAL.stamina.max ? '!' : ''],
-    ['forge', 'Lò rèn', buildingSprite('loRen', BUILDINGS.loRen.roof, 1), ''],
+    ['shop', 'Cửa hàng', icon('nguyenbao'), C.packs.some((p) => p.currency !== 'vnd' && p.limit === 'daily' && G.packCheck(S, p, now()).ok) ? '!' : ''],
     ['quests', 'Nhiệm vụ', icon('biKip'), claim ? String(claim) : ''],
   ];
   $('#nav').innerHTML = `<div class="in">${tabs.map(([id, label, src, dot]) => `<button class="tab ${ui.tab === id ? 'on' : ''}" data-act="tab" data-id="${id}">${img(src)}<span>${label}</span>${dot ? `<span class="dot">${dot}</span>` : ''}</button>`).join('')}</div>`;
@@ -590,7 +714,7 @@ function renderSheet() {
 
 function renderAll() {
   renderTop();
-  const views = { city: viewCity, heroes: viewHeroes, campaign: viewCampaign, forge: viewForge, quests: viewQuests };
+  const views = { city: viewCity, heroes: viewHeroes, campaign: viewCampaign, shop: viewShop, quests: viewQuests };
   const box = $('#view');
   const saveText = box.querySelector('#saveBox')?.value;
   box.innerHTML = views[ui.tab]();
@@ -1105,7 +1229,18 @@ const ACTIONS = {
   speedUp: () => act(() => G.speedUp(S, now())),
   cheatOpen: () => { if (DEV_TOOLS) { ui.sheet = { type: 'cheat' }; renderAll(); } },
   cheat: (d) => { if (DEV_TOOLS) act(() => runCheat(d)); },
-  bldTap: (d) => { ui.sheet = { type: 'building', id: d.id }; renderAll(); },
+  bldTap: (d) => { ui.sheet = { type: 'building', id: d.id, tab: d.tab }; ui.confirm = null; renderAll(); },
+  bldTab: (d) => { ui.sheet = { ...ui.sheet, tab: d.id }; renderSheet(); },
+  shopTab: (d) => { ui.shopTab = d.id; ui.confirm = null; renderAll(); },
+  buyItem: (d) => act(() => G.buyShopItem(S, d.id, Number(d.n), now())),
+  buyPack: (d) => act(() => G.buyPack(S, d.id, now())),
+  buyReal: (d) => {
+    if (!DEV_TOOLS) { toast('Thanh toán sẽ mở ở bản phát hành chính thức', true); return; }
+    const key = `buy-${d.id}`;
+    if (ui.confirm !== key) { ui.confirm = key; renderAll(); return; }
+    ui.confirm = null;
+    act(() => G.grantPurchase(S, d.id, now(), { test: true }));
+  },
   goto: (d) => { ui.sheet = null; ui.tab = d.id; if (d.sub) ui.heroTab = d.sub; renderAll(); window.scrollTo(0, 0); },
   heroTab: (d) => { ui.heroTab = d.id; ui.pickSlot = null; renderAll(); },
   slotTap: (d) => { const s = Number(d.slot); ui.pickSlot = ui.pickSlot === s ? null : s; renderAll(); },

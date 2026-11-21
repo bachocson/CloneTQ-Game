@@ -2154,5 +2154,260 @@
         "biKip": 6
       }
     }
+  ],
+  "shop": [
+    {
+      "id": "muaTheLuc",
+      "name": "Thể lực",
+      "item": "stamina",
+      "qty": 60,
+      "currency": "nguyenbao",
+      "price": 50,
+      "limit": "daily",
+      "limitCount": 3,
+      "reqLevel": 1
+    },
+    {
+      "id": "muaBinhThuNho",
+      "name": "Binh Thư Nhỏ",
+      "item": "tieuHoanDan",
+      "qty": 1,
+      "currency": "nguyenbao",
+      "price": 10,
+      "limit": "none",
+      "limitCount": 0,
+      "reqLevel": 1
+    },
+    {
+      "id": "muaBinhThuLon",
+      "name": "Binh Thư Lớn",
+      "item": "daiHoanDan",
+      "qty": 1,
+      "currency": "nguyenbao",
+      "price": 80,
+      "limit": "daily",
+      "limitCount": 5,
+      "reqLevel": 1
+    },
+    {
+      "id": "muaTinhThiet",
+      "name": "Tinh Thiết",
+      "item": "huyenThiet",
+      "qty": 5,
+      "currency": "nguyenbao",
+      "price": 30,
+      "limit": "none",
+      "limitCount": 0,
+      "reqLevel": 1
+    },
+    {
+      "id": "muaTanQuyen",
+      "name": "Tàn Quyển Binh Pháp",
+      "item": "biKip",
+      "qty": 1,
+      "currency": "nguyenbao",
+      "price": 50,
+      "limit": "daily",
+      "limitCount": 10,
+      "reqLevel": 1
+    },
+    {
+      "id": "doiBac",
+      "name": "Đổi bạc",
+      "item": "bac",
+      "qty": 10000,
+      "currency": "nguyenbao",
+      "price": 50,
+      "limit": "daily",
+      "limitCount": 10,
+      "reqLevel": 1
+    },
+    {
+      "id": "muaLuong",
+      "name": "Lương thực",
+      "item": "luong",
+      "qty": 10000,
+      "currency": "bac",
+      "price": 2000,
+      "limit": "daily",
+      "limitCount": 10,
+      "reqLevel": 1
+    },
+    {
+      "id": "muaGo",
+      "name": "Gỗ",
+      "item": "go",
+      "qty": 10000,
+      "currency": "bac",
+      "price": 2000,
+      "limit": "daily",
+      "limitCount": 10,
+      "reqLevel": 1
+    },
+    {
+      "id": "muaSat",
+      "name": "Sắt",
+      "item": "sat",
+      "qty": 5000,
+      "currency": "bac",
+      "price": 2500,
+      "limit": "daily",
+      "limitCount": 10,
+      "reqLevel": 1
+    }
+  ],
+  "packs": [
+    {
+      "id": "goiTanThu",
+      "name": "Gói Tân Thủ",
+      "desc": "Một lần duy nhất, giá trị gấp 10 lần.",
+      "currency": "vnd",
+      "price": 20000,
+      "limit": "once",
+      "limitCount": 1,
+      "reqLevel": 1,
+      "badge": "x10 giá trị",
+      "color": "#ffb02e",
+      "contents": {
+        "bac": 20000,
+        "nguyenbao": 300,
+        "daiHoanDan": 5,
+        "biKip": 10
+      }
+    },
+    {
+      "id": "goiNgay",
+      "name": "Tiếp Tế Hằng Ngày",
+      "desc": "Mỗi ngày mua được 1 lần.",
+      "currency": "nguyenbao",
+      "price": 30,
+      "limit": "daily",
+      "limitCount": 1,
+      "reqLevel": 1,
+      "badge": "Hằng ngày",
+      "color": "#3fa4f0",
+      "contents": {
+        "bac": 5000,
+        "tieuHoanDan": 10,
+        "huyenThiet": 10
+      }
+    },
+    {
+      "id": "goiLuongThao",
+      "name": "Gói Lương Thảo",
+      "desc": "Lương và gỗ cho thành trì.",
+      "currency": "nguyenbao",
+      "price": 100,
+      "limit": "daily",
+      "limitCount": 3,
+      "reqLevel": 1,
+      "badge": "",
+      "color": "#6cc644",
+      "contents": {
+        "luong": 50000,
+        "go": 30000
+      }
+    },
+    {
+      "id": "goiTuan",
+      "name": "Gói Tuần",
+      "desc": "Mỗi tuần mua được 1 lần.",
+      "currency": "vnd",
+      "price": 50000,
+      "limit": "weekly",
+      "limitCount": 1,
+      "reqLevel": 1,
+      "badge": "Hằng tuần",
+      "color": "#9b5cc9",
+      "contents": {
+        "nguyenbao": 500,
+        "daiHoanDan": 5,
+        "huyenThiet": 50
+      }
+    },
+    {
+      "id": "goiChieuTuong",
+      "name": "Gói Chiêu Tướng",
+      "desc": "Binh thư và binh pháp để nuôi tướng.",
+      "currency": "vnd",
+      "price": 100000,
+      "limit": "once",
+      "limitCount": 1,
+      "reqLevel": 5,
+      "badge": "",
+      "color": "#ec4e3c",
+      "contents": {
+        "bac": 100000,
+        "nguyenbao": 1000,
+        "daiHoanDan": 10,
+        "biKip": 30
+      }
+    },
+    {
+      "id": "goiThoRen",
+      "name": "Gói Thợ Rèn",
+      "desc": "Tinh thiết và sắt cho lò rèn.",
+      "currency": "nguyenbao",
+      "price": 200,
+      "limit": "weekly",
+      "limitCount": 2,
+      "reqLevel": 5,
+      "badge": "",
+      "color": "#4a4f5c",
+      "contents": {
+        "sat": 50000,
+        "huyenThiet": 80
+      }
+    }
+  ],
+  "topups": [
+    {
+      "id": "nap20",
+      "name": "Túi Nguyên Bảo",
+      "price": 20000,
+      "nguyenbao": 60,
+      "firstBonus": 60,
+      "badge": ""
+    },
+    {
+      "id": "nap50",
+      "name": "Hộp Nguyên Bảo",
+      "price": 50000,
+      "nguyenbao": 160,
+      "firstBonus": 160,
+      "badge": ""
+    },
+    {
+      "id": "nap100",
+      "name": "Rương Nguyên Bảo",
+      "price": 100000,
+      "nguyenbao": 330,
+      "firstBonus": 330,
+      "badge": "Phổ biến"
+    },
+    {
+      "id": "nap200",
+      "name": "Bao Nguyên Bảo",
+      "price": 200000,
+      "nguyenbao": 680,
+      "firstBonus": 680,
+      "badge": ""
+    },
+    {
+      "id": "nap500",
+      "name": "Kho Nguyên Bảo",
+      "price": 500000,
+      "nguyenbao": 1750,
+      "firstBonus": 1750,
+      "badge": "Lợi nhất"
+    },
+    {
+      "id": "nap1000",
+      "name": "Quốc Khố",
+      "price": 1000000,
+      "nguyenbao": 3600,
+      "firstBonus": 3600,
+      "badge": ""
+    }
   ]
 }

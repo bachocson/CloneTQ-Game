@@ -16,6 +16,12 @@ Phiên bản 0.3: luật chơi viết bằng TypeScript, dùng chung được ch
 | `cap-nhat-du-lieu.bat` | Kiểm tra file Excel và cập nhật dữ liệu game (khi không chạy `choi-thu.bat`). |
 | `bot-can-bang.bat` | Cho bot tự chơi 7 ngày, xem nhịp độ tiến trình sau khi đổi số. |
 
+## Cửa hàng và thanh toán
+
+Tab **Cửa hàng** có gói ưu đãi, gói nạp nguyên bảo và vật phẩm. Giá, nội dung và giới hạn mua nằm trong 3 sheet Excel: Cửa hàng, Gói ưu đãi, Gói nạp.
+
+Thanh toán tiền thật **chưa kết nối**. Bản thử nghiệm cho nhận miễn phí các gói giá VND để test (ghi vào `shop.testPurchases`). Bản phát hành (`npm run build:release`) báo "thanh toán sẽ mở ở bản phát hành chính thức". Khi làm bản Cocos, nối Google Play Billing / App Store, rồi để server xác nhận biên lai trước khi gọi `grantPurchase()`.
+
 ## Công cụ test (cheat)
 
 Trong bản thử nghiệm có nút đỏ **TEST** ở góc trên bên phải (hoặc tab Nhiệm vụ → Công cụ test). Bảng này cho phép:

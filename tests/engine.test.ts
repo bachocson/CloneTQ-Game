@@ -161,3 +161,30 @@ test('công cụ test: cộng tài nguyên, đầy kho, tua giờ, mở chương
   assert.ok(s.heroes.every((h) => h.level === s.player.level));
   assert.ok((s.stats.cheats ?? 0) > 0, 'save bị đánh dấu đã dùng cheat');
 });
+
+test('cửa hàng: mua vật phẩm, giới hạn theo ngày, gói ưu đãi, nạp lần đầu', () => {
+  const s = G.newGame(T0, 12);
+  s.res.nguyenbao = 10000;
+  s.res.bac = 100000;
+  const stam = s.stamina.cur;
+  assert.ok(G.buyShopItem(s, 'muaTheLuc', 1, T0).ok);
+  assert.equal(s.stamina.cur, stam + 60, 'thể lực được vượt mức tối đa');
+  const lim = CFG.shop.find((x) => x.id === 'muaTheLuc')!.limitCount;
+  for (let i = 1; i < lim; i++) assert.ok(G.buyShopItem(s, 'muaTheLuc', 1, T0).ok);
+  assert.equal(G.buyShopItem(s, 'muaTheLuc', 1, T0).ok, false, 'hết lượt trong ngày');
+  assert.ok(G.buyShopItem(s, 'muaTheLuc', 1, T0 + 24 * H).ok, 'sang ngày mới mua lại được');
+
+  assert.ok(G.buyPack(s, 'goiNgay', T0).ok);
+  assert.equal(G.buyPack(s, 'goiNgay', T0).ok, false);
+  assert.equal(G.buyPack(s, 'goiTanThu', T0).ok, false, 'gói tiền thật không mua bằng nguyên bảo được');
+
+  const nb = s.res.nguyenbao;
+  const top = CFG.topups[0];
+  assert.ok(G.grantPurchase(s, top.id, T0, { test: true }).ok);
+  assert.equal(s.res.nguyenbao, nb + top.nguyenbao + top.firstBonus, 'lần đầu có thưởng');
+  G.grantPurchase(s, top.id, T0, { test: true });
+  assert.equal(s.res.nguyenbao, nb + 2 * top.nguyenbao + top.firstBonus, 'lần sau không thưởng');
+  assert.ok(G.grantPurchase(s, 'goiTanThu', T0, { test: true }).ok);
+  assert.equal(G.grantPurchase(s, 'goiTanThu', T0, { test: true }).ok, false, 'gói một lần');
+  assert.equal(s.shop.testPurchases, 3);
+});

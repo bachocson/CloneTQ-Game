@@ -122,6 +122,47 @@ export interface QuestDef {
   reward: Cost;
 }
 
+export type ShopLimit = 'none' | 'daily' | 'weekly' | 'once';
+
+/** Mặt hàng trong cửa hàng: mua bằng nguyên bảo hoặc bạc */
+export interface ShopItemDef {
+  id: string;
+  name: string;
+  /** mã tài nguyên, vật phẩm, hoặc "stamina" (thể lực) */
+  item: string;
+  qty: number;
+  currency: 'nguyenbao' | 'bac';
+  price: number;
+  limit: ShopLimit;
+  limitCount: number;
+  reqLevel: number;
+}
+
+/** Gói ưu đãi: nhiều thứ trong một gói, trả bằng VND (tiền thật), nguyên bảo hoặc bạc */
+export interface PackDef {
+  id: string;
+  name: string;
+  desc: string;
+  currency: 'vnd' | 'nguyenbao' | 'bac';
+  price: number;
+  limit: ShopLimit;
+  limitCount: number;
+  reqLevel: number;
+  badge: string;
+  color: string;
+  contents: Cost;
+}
+
+/** Gói nạp nguyên bảo bằng tiền thật */
+export interface TopupDef {
+  id: string;
+  name: string;
+  price: number;
+  nguyenbao: number;
+  firstBonus: number;
+  badge: string;
+}
+
 export interface BalanceConfig {
   startRes: Cost;
   startItems: Cost;
@@ -228,6 +269,9 @@ export interface GameConfig {
   equipSlots: Record<string, EquipSlotDef>;
   equipQualities: EquipQualityDef[];
   quests: QuestDef[];
+  shop: ShopItemDef[];
+  packs: PackDef[];
+  topups: TopupDef[];
 }
 
 // ---------- State lưu game ----------
@@ -281,6 +325,7 @@ export interface GameState {
   /** cheats: số lần dùng công cụ test (save có số này > 0 là đã bị chỉnh tay) */
   stats: { battles: number; wins: number; forged: number; maxEnhance: number; recruited: number; cheats?: number };
   settings: { autoRefill: boolean };
+  shop: { bought: Record<string, { key: string; n: number }>; firstTopup: Record<string, boolean>; totalVnd: number; testPurchases: number };
 }
 
 /** Kết quả chung của mọi hành động */

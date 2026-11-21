@@ -44,6 +44,7 @@ export function newGame(now: number, seed: number = (Math.random() * 2 ** 32) >>
     quests: { claimed: {} },
     stats: { battles: 0, wins: 0, forged: 0, maxEnhance: 0, recruited: 0 },
     settings: { autoRefill: true },
+    shop: { bought: {}, firstTopup: {}, totalVnd: 0, testPurchases: 0 },
   };
   for (const r of Object.keys(C.resources)) state.res[r] ??= 0;
   for (const i of Object.keys(C.items)) state.items[i] ??= 0;
@@ -68,7 +69,7 @@ export function deserialize(json: string, now: number): GameState {
   if (!data || typeof data !== 'object' || !data.v) throw new Error('Dữ liệu lưu không hợp lệ');
   const fresh = newGame(now, data.seed || 1);
   const merged = { ...fresh, ...data } as GameState;
-  const keys = ['player', 'res', 'items', 'stamina', 'buildings', 'troopTiers', 'campaign', 'tavern', 'quests', 'stats', 'settings'] as const;
+  const keys = ['player', 'res', 'items', 'stamina', 'buildings', 'troopTiers', 'campaign', 'tavern', 'quests', 'stats', 'settings', 'shop'] as const;
   for (const key of keys) {
     (merged as unknown as Record<string, unknown>)[key] = { ...(fresh[key] as object), ...((data[key] as object) || {}) };
   }

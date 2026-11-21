@@ -1,4 +1,4 @@
-// Tửu lâu (chiêu mộ) và nhiệm vụ.
+// Tửu quán (chiêu mộ) và nhiệm vụ.
 
 import { cfg } from './config.js';
 import { rand, weightedPick } from './rng.js';
@@ -7,7 +7,7 @@ import { makeHero } from './state.js';
 import { rosterLimit } from './heroes.js';
 import type { ActionResult, GameState, Hero, QuestDef } from './types.js';
 
-// ---------- Tửu lâu ----------
+// ---------- Tửu quán ----------
 
 export function tavernOpen(state: GameState): boolean {
   return (state.buildings.tuuLau || 0) >= 1;

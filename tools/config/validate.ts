@@ -128,6 +128,21 @@ export function validateConfig(cfg: GameConfig): string[] {
     if (q.cond.type !== 'stage' && !(q.cond.value > 0)) e('Nhiệm vụ', `${q.id}: cần giá trị > 0`);
     checkCost('Nhiệm vụ', q.id, q.reward);
   }
+  // Cửa hàng
+  const shopIds = new Set<string>();
+  for (const x of [...(cfg.shop ?? []), ...(cfg.packs ?? []), ...(cfg.topups ?? [])]) {
+    if (shopIds.has(x.id)) e('Cửa hàng', `mã "${x.id}" bị trùng giữa các sheet Cửa hàng / Gói ưu đãi / Gói nạp`);
+    shopIds.add(x.id);
+  }
+  for (const x of cfg.shop ?? []) {
+    if (x.item !== 'stamina' && !costKeys.has(x.item)) e('Cửa hàng', `${x.id}: mặt hàng "${x.item}" không phải tài nguyên, vật phẩm hay stamina`);
+    if (x.limit !== 'none' && !(x.limitCount > 0)) e('Cửa hàng', `${x.id}: có giới hạn thì cần số lần mỗi kỳ > 0`);
+  }
+  for (const x of cfg.packs ?? []) {
+    checkCost('Gói ưu đãi', x.id, x.contents);
+    if (!Object.keys(x.contents).length) e('Gói ưu đãi', `${x.id}: gói trống, cần ít nhất một món`);
+    if (x.limit !== 'none' && !(x.limitCount > 0)) e('Gói ưu đãi', `${x.id}: có giới hạn thì cần số lần mỗi kỳ > 0`);
+  }
   checkCost('Cân bằng', 'tài nguyên khởi đầu', b?.startRes ?? {});
   checkCost('Cân bằng', 'vật phẩm khởi đầu', b?.startItems ?? {});
   return errs;

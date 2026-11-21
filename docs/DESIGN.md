@@ -30,9 +30,10 @@ Kinh nghiệm Chúa Công ──► mở cấp công trình, số người xuấ
 | Binh chủng 5 loại × 5 bậc, khắc chế | Có | Bộ › Thương › Kỵ › Bộ; Kỵ khắc Cung, Cung khắc Mưu sĩ, Mưu sĩ khắc Bộ. Cung và Mưu sĩ đánh hàng sau; Mưu sĩ dùng Trí (mưu công) |
 | Trận đánh theo lượt, khí, chiến pháp | Có | 2 hàng × 3 cột, khí đầy 100 tung chiến pháp; choáng, độc, giảm công/phòng, hồi quân |
 | Phó bản, sao, càn quét | Có | 4 chương × 5 ải; 3 sao mới càn quét được |
-| Tửu lâu (chiêu mộ) | Có | 3 khách, làm mới miễn phí mỗi 2 giờ, phẩm chất theo cấp tửu quán |
+| Tửu quán (chiêu mộ) | Có | 3 khách, làm mới miễn phí mỗi 2 giờ, phẩm chất theo cấp tửu quán. Mở bằng cách chạm vào công trình |
 | Lò rèn: rèn, cường hóa | Có | 3 ô trang bị, 5 bậc, 4 phẩm chất |
 | Nhiệm vụ chính tuyến | Có | 22 nhiệm vụ dẫn người chơi qua từng hệ thống |
+| Cửa hàng | Có | Gói ưu đãi (ngày/tuần/một lần), gói nạp nguyên bảo (thưởng lần đầu), vật phẩm mua bằng nguyên bảo hoặc bạc. Thanh toán tiền thật chưa kết nối |
 | Tri kỷ, hậu duệ (kiểu nuôi dưỡng) | Chưa | Bản sau: tri kỷ cộng chỉ số, đủ thân mật thì có binh lính chân truyền để nuôi |
 | Chiến mã / linh thú | Chưa | Cộng chỉ số toàn đội, nâng theo bậc |
 | Binh thư / trận pháp | Chưa | Kích hoạt ở lượt 3 và 6 |

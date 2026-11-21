@@ -39,6 +39,9 @@ Không chạy `choi-thu.bat` thì bấm đúp `cap-nhat-du-lieu.bat` sau khi lư
 | Chương | Tên, cấp yêu cầu, tên lính, trùm | Đội địch tự sinh theo các dòng `balance.enemy.*` ở sheet Cân bằng. |
 | Ô trang bị, Phẩm trang bị | Tên trang bị theo bậc, tỉ lệ phẩm khi rèn | |
 | Nhiệm vụ | Điều kiện và phần thưởng | Đối tượng: mã công trình, hoặc mã ải dạng `chương-ải` như `2-5`. |
+| Cửa hàng | Vật phẩm bán bằng nguyên bảo hoặc bạc | Mặt hàng: mã tài nguyên, mã vật phẩm, hoặc `stamina` (thể lực). Giới hạn: `khong_gioi_han`, `moi_ngay`, `moi_tuan`, `mot_lan`; ngày mới tính theo giờ Việt Nam, tuần bắt đầu thứ Hai. |
+| Gói ưu đãi | Gói nhiều món | Trả bằng `vnd` (tiền thật), `nguyen_bao` hoặc `bac`. Các cột "Trong gói ..." là số lượng từng món. |
+| Gói nạp | Nạp nguyên bảo bằng tiền thật | "Thưởng lần đầu" cộng thêm ở lần nạp đầu tiên của từng gói. |
 
 ## Viết hiệu ứng chiến pháp
 
