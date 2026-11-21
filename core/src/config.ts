@@ -26,12 +26,6 @@ export function heroExpToNext(level: number): number {
   return power(cfg().balance.heroExp, level);
 }
 
-export function deploySlotsFor(level: number): number {
-  let slots = 1;
-  for (const row of cfg().deploySlots) if (level >= row.level) slots = row.slots;
-  return slots;
-}
-
 export function factionBonusFor(count: number): number {
   let b = 0;
   for (const row of cfg().factionBonus) if (count >= row.count) b = row.bonus;

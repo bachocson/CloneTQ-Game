@@ -39,7 +39,7 @@ export const TARGET_VI: Record<string, string> = {
   ngau_nhien_2: 'random2', ngau_nhien_3: 'random3', it_quan_nhat: 'weakest',
 };
 export const STAT_VI: Record<string, string> = { thong_soai: 'canCot', vu_luc: 'voLuc', tri_luc: 'ngoTinh' };
-export const DMG_VI: Record<string, string> = { vat_cong: 'ngoai', muu_cong: 'doc' };
+export const DMG_VI: Record<string, string> = { vat_cong: 'ngoai', muu_cong: 'doc', phap_cong: 'phap' };
 export const RANGE_VI: Record<string, string> = { can_chien: 'melee', tam_xa: 'ranged' };
 export const QUEST_VI: Record<string, string> = {
   cong_trinh: 'building', vuot_ai: 'stage', cap_chuong_mon: 'playerLevel', so_hiep_khach: 'heroCount',
@@ -53,6 +53,8 @@ export const VFX_VI: Record<string, string> = {
   chem: 'slash', dam_xuyen: 'pierce', mua_ten: 'arrows', hoa_cong: 'fire', sam_set: 'thunder', tran_phap: 'formation',
   gam_thet: 'roar', me_hoac: 'charm', hieu_lenh: 'command', hoi_phuc: 'heal', loc_xoay: 'whirl',
 };
+export const FSTAT_VI: Record<string, string> = { vat_cong: 'vatCong', vat_phong: 'vatPhong', muu_cong: 'muuCong', muu_phong: 'muuPhong', phap_cong: 'phapCong', phap_phong: 'phapPhong', khong: 'none' };
+export const FMODE_VI: Record<string, string> = { co_dinh: 'fixed', tu_do: 'free' };
 export const CURRENCY_VI: Record<string, string> = { nguyen_bao: 'nguyenbao', bac: 'bac' };
 export const PACK_CURRENCY_VI: Record<string, string> = { vnd: 'vnd', nguyen_bao: 'nguyenbao', bac: 'bac' };
 export const LIMIT_VI: Record<string, string> = { khong_gioi_han: 'none', moi_ngay: 'daily', moi_tuan: 'weekly', mot_lan: 'once' };
@@ -190,6 +192,10 @@ export const BALANCE_NOTES: Record<string, string> = {
   'balance.skillCostBac.base': 'Bạc nâng chiến pháp = hệ số × cấp ^ lũy thừa',
   'balance.skillCostBac.exp': 'Lũy thừa giá nâng chiến pháp',
   'balance.skillHeroLevelStep': 'Cứ bao nhiêu cấp võ tướng thì được thêm 1 cấp chiến pháp tối đa',
+  'balance.formation.costBacBase': 'Bạc nâng trận hình lên cấp L+1 = gốc × hệ số tăng ^ L',
+  'balance.formation.costBacGrowth': 'Hệ số tăng giá bạc mỗi cấp trận hình',
+  'balance.formation.costBiKipBase': 'Tàn quyển binh pháp nâng trận hình = gốc + L × mỗi cấp',
+  'balance.formation.costBiKipPerLevel': 'Tàn quyển binh pháp thêm mỗi cấp trận hình',
 };
 
 function flatten(obj: unknown, prefix: string, out: Row[]): void {
@@ -232,17 +238,6 @@ export const SHEETS: SheetSpec[] = [
       return rows;
     },
     apply: () => { /* xử lý riêng trong import vì cần đoán kiểu giá trị */ },
-  },
-  {
-    name: 'Xuất trận',
-    kind: 'table',
-    note: 'Số võ tướng được đưa vào đội hình theo cấp Chúa Công.',
-    columns: () => [
-      { key: 'level', label: 'Từ cấp Chúa Công', type: 'int', required: true, min: 1 },
-      { key: 'slots', label: 'Số người xuất trận', type: 'int', required: true, min: 1, max: 6 },
-    ],
-    toRows: (cfg) => cfg.deploySlots.map((r) => ({ ...r })),
-    apply: (rows, cfg) => { cfg.deploySlots = rows.map((r) => ({ level: r.level as number, slots: r.slots as number })).sort((a, b) => a.level - b.level); },
   },
   {
     name: 'Thưởng phe',
@@ -428,22 +423,23 @@ export const SHEETS: SheetSpec[] = [
       { key: 'hp', label: 'Máu mỗi lính', type: 'num', required: true, min: 0.1 },
       { key: 'atk', label: 'Hệ số công', type: 'num', required: true, min: 0 },
       { key: 'defNgoai', label: 'Phòng ngoại công', type: 'num', required: true, min: 0 },
-      { key: 'defDoc', label: 'Phòng độc', type: 'num', required: true, min: 0 },
+      { key: 'defDoc', label: 'Phòng mưu công', type: 'num', required: true, min: 0 },
+      { key: 'defPhap', label: 'Phòng pháp công', type: 'num', min: 0, note: 'Bỏ trống thì bằng phòng mưu công' },
       { key: 'speed', label: 'Tốc độ', type: 'num', required: true, min: 0 },
       { key: 'beats', label: 'Khắc (mã hệ)', type: 'list', width: 16 },
       ...cfg.tiers.map((_, i) => ({ key: `tier${i + 1}`, label: `Tên bậc ${i + 1}`, type: 'text' as ColType, required: true, width: 18 })),
     ],
     toRows: (cfg) => cfg.troopOrder.map((id) => {
       const t = cfg.troopTypes[id];
-      const row: Row = { id, name: t.name, desc: t.desc, dmgType: t.dmgType, range: t.range, hp: t.hp, atk: t.atk, defNgoai: t.defNgoai, defDoc: t.defDoc, speed: t.speed, beats: t.beats };
+      const row: Row = { id, name: t.name, desc: t.desc, dmgType: t.dmgType, range: t.range, hp: t.hp, atk: t.atk, defNgoai: t.defNgoai, defDoc: t.defDoc, defPhap: t.defPhap, speed: t.speed, beats: t.beats };
       t.tiers.forEach((n, i) => { row[`tier${i + 1}`] = n; });
       return row;
     }),
     apply: (rows, cfg) => {
       cfg.troopOrder = rows.map((r) => r.id as string);
       cfg.troopTypes = Object.fromEntries(rows.map((r) => [r.id as string, {
-        name: r.name as string, desc: (r.desc as string) ?? '', dmgType: r.dmgType as 'ngoai' | 'doc', range: r.range as 'melee' | 'ranged',
-        hp: r.hp as number, atk: r.atk as number, defNgoai: r.defNgoai as number, defDoc: r.defDoc as number, speed: r.speed as number,
+        name: r.name as string, desc: (r.desc as string) ?? '', dmgType: r.dmgType as 'ngoai' | 'doc' | 'phap', range: r.range as 'melee' | 'ranged',
+        hp: r.hp as number, atk: r.atk as number, defNgoai: r.defNgoai as number, defDoc: r.defDoc as number, ...(r.defPhap !== undefined ? { defPhap: r.defPhap as number } : {}), speed: r.speed as number,
         beats: (r.beats as string[]) ?? [],
         tiers: Object.keys(r).filter((k) => /^tier\d+$/.test(k)).sort((a, b) => Number(a.slice(4)) - Number(b.slice(4))).map((k) => r[k] as string).filter(Boolean),
       }]));
@@ -615,6 +611,47 @@ export const SHEETS: SheetSpec[] = [
       cfg.topups = rows.map((r) => ({
         id: r.id as string, name: r.name as string, price: r.price as number, nguyenbao: r.nguyenbao as number,
         firstBonus: (r.firstBonus as number) ?? 0, badge: (r.badge as string) ?? '',
+      }));
+    },
+  },
+  {
+    name: 'Trận hình',
+    kind: 'table',
+    note: 'Lưới 3×3, ô 1–9: hàng 1 (ô 1–3) tiền quân, hàng 2 (ô 4–6) trung quân, hàng 3 (ô 7–9) hậu quân. Mỗi hàng ghi 3 ký tự: x = đặt được tướng, o = không. Hiệu quả = gốc + max(0, cấp − "cộng từ cấp" + 1) × "mỗi cấp".',
+    columns: () => [
+      { key: 'id', label: 'Mã', type: 'id', required: true, width: 12 },
+      { key: 'name', label: 'Tên', type: 'text', required: true, width: 14 },
+      { key: 'desc', label: 'Mô tả', type: 'text', width: 30 },
+      { key: 'r1', label: 'Hàng 1 (ô 1-3)', type: 'text', required: true, width: 10 },
+      { key: 'r2', label: 'Hàng 2 (ô 4-6)', type: 'text', required: true, width: 10 },
+      { key: 'r3', label: 'Hàng 3 (ô 7-9)', type: 'text', required: true, width: 10 },
+      { key: 'stat', label: 'Hiệu quả', type: 'enum', required: true, enumMap: FSTAT_VI, note: enumNote(FSTAT_VI) },
+      { key: 'basePct', label: 'Hiệu quả gốc (0.15 = 15%)', type: 'num', min: 0 },
+      { key: 'perLevelPct', label: 'Mỗi cấp cộng', type: 'num', min: 0 },
+      { key: 'perLevelFrom', label: 'Cộng từ cấp', type: 'int', min: 0 },
+      { key: 'maxLevel', label: 'Cấp tối đa', type: 'int', required: true, min: 0 },
+      { key: 'mode', label: 'Kiểu xếp', type: 'enum', required: true, enumMap: FMODE_VI, note: `${enumNote(FMODE_VI)}. co_dinh: ô mở theo cột Thứ tự mở ô. tu_do: đặt ô bất kỳ trong bố cục, số ô theo cột Mốc thêm ô.` },
+      { key: 'unlockOrder', label: 'Thứ tự mở ô (cấp 0, 1, 2...)', type: 'list', width: 18, note: 'Ô đầu tiên mở ở cấp 0, ô thứ hai ở cấp 1... Ví dụ: 1, 2, 3, 4, 6' },
+      { key: 'freeCountLevels', label: 'Mốc thêm ô (kiểu tự do)', type: 'list', width: 16, note: 'Mỗi mốc cấp thêm 1 ô. Ví dụ: 0, 5, 10, 15, 20 = 1 ô ở cấp 0, 5 ô ở cấp 20' },
+      { key: 'reqQuanMac', label: 'Mở ở cấp Quân Mạc', type: 'int', required: true, min: 0 },
+      { key: 'startLevel', label: 'Cấp khi bắt đầu', type: 'int', min: 0 },
+    ],
+    toRows: (cfg) => (cfg.formations ?? []).map((f) => ({
+      id: f.id, name: f.name, desc: f.desc, r1: f.rows[0], r2: f.rows[1], r3: f.rows[2], stat: f.stat,
+      basePct: f.basePct, perLevelPct: f.perLevelPct, perLevelFrom: f.perLevelFrom, maxLevel: f.maxLevel, mode: f.mode,
+      unlockOrder: f.unlockOrder.map(String), freeCountLevels: f.freeCountLevels.map(String), reqQuanMac: f.reqQuanMac, startLevel: f.startLevel,
+    })),
+    apply: (rows, cfg) => {
+      const row = (v: unknown) => String(v ?? '').replace(/\s+/g, '').toLowerCase();
+      const nums = (v: unknown) => ((v as string[]) ?? []).map((x) => Number(x));
+      cfg.formations = rows.map((r) => ({
+        id: r.id as string, name: r.name as string, desc: (r.desc as string) ?? '',
+        rows: [row(r.r1), row(r.r2), row(r.r3)] as [string, string, string],
+        stat: r.stat as GameConfig['formations'][number]['stat'],
+        basePct: (r.basePct as number) ?? 0, perLevelPct: (r.perLevelPct as number) ?? 0, perLevelFrom: (r.perLevelFrom as number) ?? 0,
+        maxLevel: r.maxLevel as number, mode: r.mode as 'fixed' | 'free',
+        unlockOrder: nums(r.unlockOrder), freeCountLevels: nums(r.freeCountLevels),
+        reqQuanMac: r.reqQuanMac as number, startLevel: (r.startLevel as number) ?? 0,
       }));
     },
   },

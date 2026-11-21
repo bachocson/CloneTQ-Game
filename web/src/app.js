@@ -152,7 +152,7 @@ function renderTop() {
 const CITY_POS = {
   tangKinh: [0.5, 0.36], loRen: [0.667, 0.465], tuuLau: [0.333, 0.465],
   khoHang: [0.833, 0.57], chinhDien: [0.5, 0.57], luyenVo: [0.167, 0.57],
-  xuongGo: [0.667, 0.675], ruong: [0.333, 0.675], tienTrang: [0.5, 0.78], moSat: [0.89, 0.86],
+  xuongGo: [0.667, 0.675], ruong: [0.333, 0.675], tienTrang: [0.5, 0.78], moSat: [0.89, 0.86], quanMac: [0.11, 0.86],
 };
 
 function buildingEffect(id, lv) {
@@ -164,6 +164,7 @@ function buildingEffect(id, lv) {
   if (id === 'loRen') return lv ? `Rèn tối đa bậc ${Math.min(5, 1 + Math.floor(lv / BAL.equip.tierEveryLoRen))}, cường hóa tối đa +${lv * BAL.equip.maxEnhancePerLoRen}` : 'Chưa xây';
   if (id === 'tangKinh') return `Chiến pháp tối đa cấp ${1 + lv}`;
   if (id === 'chinhDien') return `Công trình khác tối đa cấp ${lv}`;
+  if (id === 'quanMac') return `Trận hình tối đa cấp ${lv}; mở ${C.formations.filter((f) => f.reqQuanMac <= lv).length}/${C.formations.length} trận hình`;
   return '';
 }
 
@@ -206,7 +207,9 @@ function viewCity() {
 }
 
 // Chức năng mở ra khi chạm vào công trình (tab đầu tiên của bảng công trình)
+// Mỗi công trình: danh sách tab chức năng [mã tab, nhãn, hàm vẽ]. Tab đầu tiên mở mặc định.
 const BUILDING_FEATURE = {
+  quanMac: [['feature', 'Trận hình', () => viewFormations()], ['roster', 'Võ tướng', () => viewRoster()]],
   chinhDien: ['Tổng quan', () => viewOverview()],
   tuuLau: ['Chiêu mộ', () => viewTavern()],
   loRen: ['Rèn đồ', () => viewForge()],
@@ -243,15 +246,17 @@ function upgradePanel(id) {
 function buildingSheet(id) {
   const b = BUILDINGS[id];
   const lv = S.buildings[id] || 0;
-  const feature = lv > 0 ? BUILDING_FEATURE[id] : null;
-  const tab = feature ? ui.sheet.tab ?? 'feature' : 'upgrade';
+  const raw = lv > 0 ? BUILDING_FEATURE[id] : null;
+  const features = !raw ? [] : Array.isArray(raw[0]) ? raw : [['feature', raw[0], raw[1]]];
+  const tab = features.length ? ui.sheet.tab ?? 'feature' : 'upgrade';
   const canUp = !S.queue && G.upgradeCheck(S, id).ok;
   const building = S.queue && S.queue.id === id;
-  const tabs = feature ? `<div class="seg">
-      <button class="${tab === 'feature' ? 'on' : ''}" data-act="bldTab" data-id="feature">${feature[0]}</button>
+  const tabs = features.length ? `<div class="seg">
+      ${features.map(([k, label]) => `<button class="${tab === k ? 'on' : ''}" data-act="bldTab" data-id="${k}">${label}</button>`).join('')}
       <button class="${tab === 'upgrade' ? 'on' : ''}" data-act="bldTab" data-id="upgrade">Nâng cấp${canUp ? ' ▲' : building ? ' …' : ''}</button>
     </div>` : '';
-  const body = tab === 'feature' && feature ? feature[1]() : `<p>${esc(buildingEffect(id, lv))}</p>${upgradePanel(id)}`;
+  const cur = features.find(([k]) => k === tab);
+  const body = cur ? cur[2]() : `<p>${esc(buildingEffect(id, lv))}</p>${upgradePanel(id)}`;
   return `
     <div class="sheet-head">
       <div class="art" style="background:linear-gradient(#bfe7ff,#8fd15a)">${img(buildingSprite(id, b.roof, lv))}</div>
@@ -377,6 +382,117 @@ function viewShop() {
   return `<h2 class="disp">Cửa hàng</h2>${seg}${body}`;
 }
 
+// ---------- Trận hình ----------
+const FORMS = C.formations;
+const formName = (id) => FORMS.find((f) => f.id === id)?.name ?? '';
+
+/** Cấp mở của từng ô (0–8) theo kiểu cố định; null nếu không thuộc bố cục */
+function cellUnlockLevels(f) {
+  const out = Array(9).fill(null);
+  const layout = G.layoutCells(f);
+  if (f.mode === 'free') layout.forEach((c) => { out[c] = 0; });
+  else f.unlockOrder.forEach((s, i) => { out[s - 1] = i; });
+  return out;
+}
+
+function formationEffectText(f, lv) {
+  if (f.stat === 'none') return f.mode === 'free' ? 'Đặt tướng vào ô bất kỳ' : 'Không tăng chỉ số';
+  return `${G.STAT_LABEL[f.stat]} +${Math.round(G.formationBonus(f, lv) * 100)}% toàn đội`;
+}
+
+/** Ô trận hình để xếp tướng (trận hình đang dùng) */
+function formationCell(cell, f, lv, cap) {
+  const unlock = cellUnlockLevels(f)[cell];
+  const pick = ui.pickSlot === cell ? 'pick' : '';
+  if (unlock === null) return '<div class="slot blocked" aria-hidden="true"></div>';
+  if (!cap.open.includes(cell)) return `<div class="slot locked"><span class="lock">Cấp ${unlock}</span></div>`;
+  const uid = S.team[cell];
+  const h = uid && G.findHero(S, uid);
+  if (!h) return `<button class="slot ${pick}" data-act="slotTap" data-slot="${cell}" aria-label="Ô ${cell + 1} trống"><span class="muted" style="margin:auto">+</span><span class="cellno">${cell + 1}</span></button>`;
+  const max = G.heroMaxTroops(S, h);
+  return `<button class="slot filled ${pick}" data-act="slotTap" data-slot="${cell}">
+    ${img(heroImg(h.tid, h.troopType))}<span class="name">${esc(HEROES[h.tid].name)}</span>${bar(h.troops, max, 'red')}<span class="cellno">${cell + 1}</span>
+  </button>`;
+}
+
+function formationEditor({ withRoster = false } = {}) {
+  const f = FORMS.find((x) => x.id === S.formation);
+  if (!f) return '<div class="panel"><p>Chưa có trận hình.</p></div>';
+  const lv = G.formationLevel(S, f.id);
+  const cap = G.activeCapacity(S);
+  const used = S.team.filter(Boolean).length;
+  const counts = G.factionCounts(S);
+  const factionLine = Object.entries(counts).map(([fc, n]) => {
+    const b = G.factionBonusFor(n);
+    return `<span class="chip" style="color:${FACTIONS[fc].color}">${FACTIONS[fc].name} ×${n}${b ? ` · +${Math.round(b * 100)}% công` : ''}</span>`;
+  }).join(' ');
+  const rc = teamRefillCost();
+  const grid = [0, 1, 2].map((r) => `<span class="row-label">${G.ROW_NAMES[r]}${r === 0 ? ' · đỡ đòn cận chiến' : r === 2 ? ' · hợp Cung binh, Mưu sĩ' : ''}</span>
+    <div class="formation">${[0, 1, 2].map((c) => formationCell(r * 3 + c, f, lv, cap)).join('')}</div>`).join('');
+  const picker = ui.pickSlot !== null
+    ? `<div class="row"><span class="muted">Chọn võ tướng bên dưới để đặt vào ô ${ui.pickSlot + 1}.</span><span class="spacer"></span><button class="btn small ghost" data-act="clearSlot">Bỏ trống ô</button><button class="btn small ghost" data-act="cancelPick">Hủy</button></div>`
+    : `<p class="muted">Chạm ô trống hoặc ô có tướng để xếp. Ô khóa mở khi nâng cấp trận hình ở ${esc(BUILDINGS.quanMac.name)}.</p>`;
+  const roster = withRoster && ui.pickSlot !== null
+    ? `<div class="cards">${[...S.heroes].sort((a, b) => G.heroPower(S, b) - G.heroPower(S, a)).map(heroCard).join('')}</div>` : '';
+  return `<div class="panel" style="display:flex;flex-direction:column;gap:8px">
+      <div class="row"><b class="disp" style="font-size:18px;color:#fff">${esc(f.name)}</b><span class="chip num">Cấp ${lv}</span><span class="spacer"></span><span class="num">${used}/${cap.max} tướng</span></div>
+      <p class="muted">${esc(formationEffectText(f, lv))}</p>
+      ${grid}
+      ${picker}
+      ${factionLine ? `<div class="row wrap">${factionLine}</div>` : ''}
+      <div class="row wrap"><label class="toggle"><input type="checkbox" id="autoRefill" data-act="toggleRefill" ${S.settings.autoRefill ? 'checked' : ''}> Tự bổ sung quân trước trận</label>
+        <span class="spacer"></span><button class="btn small" data-act="refillTeam" ${rc.luong ? '' : 'disabled'}>Bổ sung quân</button></div>
+      ${rc.luong ? costHtml(rc) : ''}
+    </div>${roster}`;
+}
+
+function miniGrid(f, lv) {
+  const levels = cellUnlockLevels(f);
+  const cap = G.formationCapacity(f, Math.max(0, lv));
+  return `<div class="mini-grid">${levels.map((l, i) => {
+    if (l === null) return '<span class="mc off"></span>';
+    const open = lv >= 0 && cap.open.includes(i) && (f.mode === 'fixed' || true);
+    return `<span class="mc ${open ? 'on' : 'lock'}">${f.mode === 'fixed' ? (l === 0 ? '★' : l) : ''}</span>`;
+  }).join('')}</div>`;
+}
+
+function formationList() {
+  return FORMS.map((f) => {
+    const lv = G.formationLevel(S, f.id);
+    const active = S.formation === f.id;
+    const unlocked = lv >= 0;
+    const chk = G.formationUpgradeCheck(S, f.id);
+    const cap = G.formationCapacity(f, Math.max(0, lv));
+    const next = lv + 1;
+    const nextCap = unlocked && next <= f.maxLevel ? G.formationCapacity(f, next).max : cap.max;
+    let action;
+    if (!unlocked) action = `<span class="muted">Mở khi ${esc(BUILDINGS.quanMac.name)} cấp ${f.reqQuanMac}</span>`;
+    else action = `${active ? '<span class="chip" style="background:var(--green);color:#fff">Đang dùng</span>' : `<button class="btn small blue" data-act="useFormation" data-id="${f.id}">Dùng</button>`}
+      <button class="btn small" data-act="upFormation" data-id="${f.id}" ${chk.ok ? '' : 'disabled'}>Nâng cấp</button>`;
+    return `<div class="panel form-card ${active ? 'hi' : ''} ${unlocked ? '' : 'locked'}">
+      ${miniGrid(f, lv)}
+      <div style="display:flex;flex-direction:column;gap:3px;min-width:0">
+        <div class="row"><b>${esc(f.name)}</b>${unlocked ? `<span class="chip num">${lv}/${f.maxLevel}</span>` : ''}<span class="spacer"></span><span class="muted num">${cap.max} ô</span></div>
+        <span class="muted">${esc(formationEffectText(f, Math.max(0, lv)))}${unlocked && next <= f.maxLevel ? ` → cấp ${next}: ${nextCap > cap.max ? `${nextCap} ô` : esc(formationEffectText(f, next))}` : ''}</span>
+        ${unlocked && lv < f.maxLevel ? `<div class="row wrap">${costHtml(G.formationUpgradeCost(lv))}${chk.ok ? '' : `<small style="color:var(--red-dk)">${esc(chk.reason)}</small>`}</div>` : ''}
+        <div class="row wrap">${action}</div>
+      </div></div>`;
+  }).join('');
+}
+
+function viewFormations() {
+  return `${formationEditor({ withRoster: true })}
+    <p class="muted">Chọn trận hình rồi xếp tướng vào các ô sáng. Số trên ô nhỏ là cấp trận hình mở ô đó (★ = mở sẵn). Cấp trận hình không vượt cấp ${esc(BUILDINGS.quanMac.name)}.</p>
+    ${formationList()}`;
+}
+
+function viewRoster() {
+  const roster = [...S.heroes].sort((a, b) => G.heroPower(S, b) - G.heroPower(S, a)).map(heroCard).join('');
+  return `<div class="row"><span class="muted">Chạm thẻ để xem, nâng cấp, đổi binh chủng, trang bị.</span><span class="spacer"></span><span class="num">${S.heroes.length}/${G.rosterLimit(S)}</span></div>
+    <div class="cards">${roster}</div>
+    <button class="btn blue" data-act="bldTap" data-id="tuuLau" data-tab="feature">Chiêu mộ thêm ở ${esc(BUILDINGS.tuuLau.name)}</button>`;
+}
+
 // ---------- Võ tướng ----------
 function heroCard(h) {
   const t = HEROES[h.tid];
@@ -415,31 +531,10 @@ function teamRefillCost() {
 }
 
 function viewHeroes() {
-  const seg = `<div class="row wrap"><button class="btn small blue" data-act="bldTap" data-id="tuuLau" data-tab="feature">Chiêu mộ ở ${esc(BUILDINGS.tuuLau.name)}</button><button class="btn small ghost" data-act="bldTap" data-id="luyenVo" data-tab="feature">Luyện binh ở ${esc(BUILDINGS.luyenVo.name)}</button></div>`;
-
-  const used = S.team.filter(Boolean).length;
-  const counts = G.factionCounts(S);
-  const factionLine = Object.entries(counts)
-    .map(([f, n]) => {
-      const b = G.factionBonusFor(n);
-      return `<span class="chip" style="color:${FACTIONS[f].color}">${FACTIONS[f].name} ×${n}${b ? ` · +${Math.round(b * 100)}% công` : ''}</span>`;
-    })
-    .join(' ');
-  const rc = teamRefillCost();
+  const links = `<div class="row wrap"><button class="btn small blue" data-act="bldTap" data-id="quanMac" data-tab="feature">Đổi trận hình ở ${esc(BUILDINGS.quanMac.name)}</button><button class="btn small ghost" data-act="bldTap" data-id="tuuLau" data-tab="feature">Chiêu mộ</button><button class="btn small ghost" data-act="bldTap" data-id="luyenVo" data-tab="feature">Luyện binh</button></div>`;
   const roster = [...S.heroes].sort((a, b) => G.heroPower(S, b) - G.heroPower(S, a)).map(heroCard).join('');
-  return `<h2 class="disp">Võ tướng</h2>${seg}
-    <div class="panel" style="display:flex;flex-direction:column;gap:8px">
-      <div class="row"><b>Đội hình</b><span class="spacer"></span><span class="muted num">${used}/${G.deployLimit(S)} người</span></div>
-      <span class="row-label">Hàng trước · đỡ đòn cận chiến</span>
-      <div class="formation">${[0, 1, 2].map(slotHtml).join('')}</div>
-      <span class="row-label">Hàng sau · hợp với Cung binh, Mưu sĩ</span>
-      <div class="formation">${[3, 4, 5].map(slotHtml).join('')}</div>
-      ${ui.pickSlot !== null ? `<div class="row"><span class="muted">Chọn võ tướng bên dưới để đặt vào ô đã chọn.</span><span class="spacer"></span><button class="btn small ghost" data-act="clearSlot">Bỏ trống ô</button><button class="btn small ghost" data-act="cancelPick">Hủy</button></div>` : '<p class="muted">Chạm một ô để đổi người. Đủ 3 người cùng phe được cộng công.</p>'}
-      ${factionLine ? `<div class="row wrap">${factionLine}</div>` : ''}
-      <div class="row wrap"><label class="toggle"><input type="checkbox" id="autoRefill" data-act="toggleRefill" ${S.settings.autoRefill ? 'checked' : ''}> Tự bổ sung quân trước trận</label>
-        <span class="spacer"></span><button class="btn small " data-act="refillTeam" ${rc.luong ? '' : 'disabled'}>Bổ sung quân</button></div>
-      ${rc.luong ? costHtml(rc) : ''}
-    </div>
+  return `<h2 class="disp">Võ tướng</h2>${links}
+    ${formationEditor()}
     <div class="row"><span class="disp" style="font-size:18px">Võ tướng</span><span class="spacer"></span><span class="num disp">${S.heroes.length}/${G.rosterLimit(S)}</span></div>
     <div class="cards">${roster}</div>`;
 }
@@ -621,6 +716,7 @@ function viewCampaign() {
   return `<h2 class="disp">Chinh chiến</h2>
     <div class="panel" style="display:flex;flex-direction:column;gap:6px">
       <div class="row"><span>Lực chiến đội hình</span><span class="spacer"></span><b class="num" style="color:var(--gold)">${fmt(tp)}</b></div>
+      <div class="row"><span>Trận hình: <b>${esc(formName(S.formation))}</b> cấp ${G.formationLevel(S, S.formation)} · ${S.team.filter(Boolean).length}/${G.deployLimit(S)} tướng</span><span class="spacer"></span><button class="btn small blue" data-act="bldTap" data-id="quanMac" data-tab="feature">Đổi</button></div>
       <p class="muted">Mỗi trận thắng tốn ${BAL.stamina.perWin} thể lực, thua tốn ${BAL.stamina.perLoss}. Đạt 3 sao để càn quét (tốn thể lực và lương, không mất quân).</p>
       <label class="toggle"><input type="checkbox" id="autoRefill2" data-act="toggleRefill" ${S.settings.autoRefill ? 'checked' : ''}> Tự bổ sung quân trước trận</label>
     </div>${chapters}`;
@@ -756,14 +852,17 @@ function unitLook(u) {
 }
 
 // Vị trí trên chiến trường (tỉ lệ khung): hàng xa nhỏ hơn và hẹp hơn để tạo chiều sâu
+// 3 hàng mỗi bên: hàng 0 tiền quân (gần giữa sân), hàng 2 hậu quân (xa nhất)
 const ROWS = {
-  B_back: { y: 0.27, k: 0.6, s: 0.74 },
-  B_front: { y: 0.46, k: 0.74, s: 0.86 },
-  A_front: { y: 0.7, k: 0.88, s: 0.98 },
-  A_back: { y: 0.93, k: 1.0, s: 1.1 },
+  B_2: { y: 0.22, k: 0.56, s: 0.66 },
+  B_1: { y: 0.335, k: 0.64, s: 0.74 },
+  B_0: { y: 0.455, k: 0.73, s: 0.83 },
+  A_0: { y: 0.665, k: 0.86, s: 0.94 },
+  A_1: { y: 0.80, k: 0.94, s: 1.01 },
+  A_2: { y: 0.935, k: 1.02, s: 1.08 },
 };
 function unitPos(side, slot) {
-  const row = ROWS[`${side}_${slot < 3 ? 'front' : 'back'}`];
+  const row = ROWS[`${side}_${Math.floor(slot / 3)}`];
   const lane = [0.2, 0.5, 0.8][slot % 3];
   return { x: 0.5 + (lane - 0.5) * row.k, y: row.y, s: row.s };
 }
@@ -1230,7 +1329,9 @@ const ACTIONS = {
   cheatOpen: () => { if (DEV_TOOLS) { ui.sheet = { type: 'cheat' }; renderAll(); } },
   cheat: (d) => { if (DEV_TOOLS) act(() => runCheat(d)); },
   bldTap: (d) => { ui.sheet = { type: 'building', id: d.id, tab: d.tab }; ui.confirm = null; renderAll(); },
-  bldTab: (d) => { ui.sheet = { ...ui.sheet, tab: d.id }; renderSheet(); },
+  bldTab: (d) => { ui.sheet = { ...ui.sheet, tab: d.id }; ui.pickSlot = null; renderSheet(); },
+  useFormation: (d) => { ui.pickSlot = null; act(() => G.setFormation(S, d.id)); },
+  upFormation: (d) => act(() => G.upgradeFormation(S, d.id)),
   shopTab: (d) => { ui.shopTab = d.id; ui.confirm = null; renderAll(); },
   buyItem: (d) => act(() => G.buyShopItem(S, d.id, Number(d.n), now())),
   buyPack: (d) => act(() => G.buyPack(S, d.id, now())),

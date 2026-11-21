@@ -1,6 +1,7 @@
 // Võ tướng: chỉ số, cấp, quân số, chiến pháp, đội hình, bậc binh chủng.
 
-import { cfg, deploySlotsFor, factionBonusFor, heroExpToNext, maxTroopsFor, power } from './config.js';
+import { cfg, factionBonusFor, heroExpToNext, maxTroopsFor, power } from './config.js';
+import { activeCapacity, formationMods, formationDef } from './formation.js';
 import { equipStatValue } from './equipment.js';
 import { canAfford, pay, missingFor } from './economy.js';
 import type { BattleUnit } from './battle.js';
@@ -152,13 +153,17 @@ export function researchTier(state: GameState, type: string): ActionResult {
   return { ok: true, msg: `Binh chủng hệ ${tt.name} lên bậc ${chk.next}: ${tt.tiers[chk.next - 1]}` };
 }
 
+/** Số tướng tối đa xuất trận: do trận hình đang dùng và cấp của nó quyết định */
 export function deployLimit(state: GameState): number {
-  return deploySlotsFor(state.player.level);
+  return activeCapacity(state).max;
 }
 
 export function setTeamSlot(state: GameState, slot: number, uid: number | null): ActionResult {
-  if (slot < 0 || slot > 5) return { ok: false, reason: 'Ô không hợp lệ' };
+  if (slot < 0 || slot > 8) return { ok: false, reason: 'Ô không hợp lệ' };
   if (uid !== null && !findHero(state, uid)) return { ok: false, reason: 'Không tìm thấy võ tướng' };
+  const cap = activeCapacity(state);
+  const fname = formationDef(state.formation)?.name ?? 'Trận hình';
+  if (uid !== null && !cap.open.includes(slot)) return { ok: false, reason: `Ô này chưa mở trong ${fname}. Nâng cấp trận hình ở Quân Mạc để mở thêm ô.` };
   const team = [...state.team];
   const prev = uid === null ? -1 : team.indexOf(uid);
   if (prev >= 0) {
@@ -168,7 +173,7 @@ export function setTeamSlot(state: GameState, slot: number, uid: number | null):
     team[slot] = uid;
   }
   if (team.filter(Boolean).length > deployLimit(state)) {
-    return { ok: false, reason: `Chỉ được xuất trận ${deployLimit(state)} người ở cấp Chúa Công hiện tại` };
+    return { ok: false, reason: `${fname} cấp hiện tại chỉ cho ${deployLimit(state)} tướng. Nâng cấp trận hình ở Quân Mạc để thêm ô.` };
   }
   state.team = team;
   return { ok: true, msg: '' };
@@ -189,6 +194,7 @@ export function factionCounts(state: GameState): Record<string, number> {
 /** Đổi đội hình thành đơn vị chiến đấu */
 export function teamUnits(state: GameState): BattleUnit[] {
   const counts = factionCounts(state);
+  const mods = formationMods(state);
   const units: BattleUnit[] = [];
   state.team.forEach((uid, slot) => {
     const h = findHero(state, uid);
@@ -205,6 +211,7 @@ export function teamUnits(state: GameState): BattleUnit[] {
       maxTroops: heroMaxTroops(state, h),
       skill: { id: t.skill, lv: h.skillLv },
       bonus: (h.troopType === t.school ? cfg().balance.combat.schoolBonus : 0) + factionBonusFor(counts[t.faction] || 0),
+      mods,
       look: { kind: 'hero', tid: h.tid, type: h.troopType },
     });
   });

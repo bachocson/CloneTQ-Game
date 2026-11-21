@@ -6,7 +6,7 @@ import { BALANCE_NOTES } from './schema.js';
 
 const REQUIRED_RESOURCES = ['luong', 'go', 'sat', 'bac', 'nguyenbao'];
 const REQUIRED_ITEMS = ['tieuHoanDan', 'huyenThiet', 'biKip'];
-const REQUIRED_BUILDINGS = ['chinhDien', 'khoHang', 'luyenVo', 'tuuLau', 'loRen', 'tangKinh'];
+const REQUIRED_BUILDINGS = ['chinhDien', 'quanMac', 'khoHang', 'luyenVo', 'tuuLau', 'loRen', 'tangKinh'];
 const COLOR = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 const ARRAY_KEYS = new Set(['balance.enemy.counts', 'balance.starThresholds']);
 
@@ -53,7 +53,6 @@ export function validateConfig(cfg: GameConfig): string[] {
   for (const i of REQUIRED_ITEMS) if (!cfg.items?.[i]) e('Vật phẩm', `thiếu vật phẩm bắt buộc "${i}" (game cần mã này)`);
 
   // Xuất trận, thưởng phe
-  if (!cfg.deploySlots?.length || cfg.deploySlots[0].level !== 1) e('Xuất trận', 'phải có một dòng bắt đầu từ cấp 1');
 
   // Công trình
   for (const id of REQUIRED_BUILDINGS) if (!cfg.buildings?.[id]) e('Công trình', `thiếu công trình bắt buộc "${id}" (game cần mã này)`);
@@ -128,6 +127,38 @@ export function validateConfig(cfg: GameConfig): string[] {
     if (q.cond.type !== 'stage' && !(q.cond.value > 0)) e('Nhiệm vụ', `${q.id}: cần giá trị > 0`);
     checkCost('Nhiệm vụ', q.id, q.reward);
   }
+  // Trận hình
+  const fIds = new Set<string>();
+  if (!cfg.formations?.length) e('Trận hình', 'cần ít nhất một trận hình');
+  for (const f of cfg.formations ?? []) {
+    if (fIds.has(f.id)) e('Trận hình', `mã "${f.id}" bị trùng`);
+    fIds.add(f.id);
+    const cells: number[] = [];
+    f.rows.forEach((row, r) => {
+      if (!/^[xo]{3}$/.test(row)) e('Trận hình', `${f.id}: hàng ${r + 1} = "${row}" phải gồm đúng 3 ký tự x hoặc o (ví dụ xox)`);
+      for (let c = 0; c < 3; c++) if (row[c] === 'x') cells.push(r * 3 + c + 1);
+    });
+    if (f.mode === 'fixed') {
+      if (!f.unlockOrder.length) e('Trận hình', `${f.id}: kiểu cố định cần Thứ tự mở ô`);
+      if (f.unlockOrder.length > 5) e('Trận hình', `${f.id}: tối đa 5 ô (đang có ${f.unlockOrder.length})`);
+      const seen = new Set<number>();
+      for (const s of f.unlockOrder) {
+        if (!cells.includes(s)) e('Trận hình', `${f.id}: ô ${s} trong Thứ tự mở ô không phải ô "x" của bố cục (ô x: ${cells.join(', ')})`);
+        if (seen.has(s)) e('Trận hình', `${f.id}: ô ${s} lặp lại trong Thứ tự mở ô`);
+        seen.add(s);
+      }
+      if (f.unlockOrder.length - 1 > f.maxLevel) e('Trận hình', `${f.id}: cấp tối đa ${f.maxLevel} không đủ để mở hết ${f.unlockOrder.length} ô`);
+    } else {
+      if (!f.freeCountLevels.length || f.freeCountLevels[0] !== 0) e('Trận hình', `${f.id}: kiểu tự do cần Mốc thêm ô bắt đầu bằng 0`);
+      if (f.freeCountLevels.length > 5) e('Trận hình', `${f.id}: tối đa 5 ô`);
+      if (f.freeCountLevels.some((x, i, a) => i > 0 && x <= a[i - 1])) e('Trận hình', `${f.id}: Mốc thêm ô phải tăng dần`);
+      if (cells.length < f.freeCountLevels.length) e('Trận hình', `${f.id}: bố cục chỉ có ${cells.length} ô x, không đủ ${f.freeCountLevels.length} ô`);
+    }
+    if (f.startLevel > f.maxLevel) e('Trận hình', `${f.id}: cấp khi bắt đầu lớn hơn cấp tối đa`);
+  }
+  const qmStart = cfg.buildings?.quanMac?.startLevel ?? 0;
+  if (cfg.formations?.length && !cfg.formations.some((f) => f.reqQuanMac <= qmStart)) e('Trận hình', `cần ít nhất một trận hình mở sẵn (Mở ở cấp Quân Mạc ≤ ${qmStart}, cấp Quân Mạc khi bắt đầu)`);
+
   // Cửa hàng
   const shopIds = new Set<string>();
   for (const x of [...(cfg.shop ?? []), ...(cfg.packs ?? []), ...(cfg.topups ?? [])]) {

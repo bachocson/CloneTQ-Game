@@ -39,6 +39,7 @@ Không chạy `choi-thu.bat` thì bấm đúp `cap-nhat-du-lieu.bat` sau khi lư
 | Chương | Tên, cấp yêu cầu, tên lính, trùm | Đội địch tự sinh theo các dòng `balance.enemy.*` ở sheet Cân bằng. |
 | Ô trang bị, Phẩm trang bị | Tên trang bị theo bậc, tỉ lệ phẩm khi rèn | |
 | Nhiệm vụ | Điều kiện và phần thưởng | Đối tượng: mã công trình, hoặc mã ải dạng `chương-ải` như `2-5`. |
+| Trận hình | Bố cục 3×3, hiệu quả, thứ tự mở ô, cấp mở | Xem mục "Trận hình" bên dưới. |
 | Cửa hàng | Vật phẩm bán bằng nguyên bảo hoặc bạc | Mặt hàng: mã tài nguyên, mã vật phẩm, hoặc `stamina` (thể lực). Giới hạn: `khong_gioi_han`, `moi_ngay`, `moi_tuan`, `mot_lan`; ngày mới tính theo giờ Việt Nam, tuần bắt đầu thứ Hai. |
 | Gói ưu đãi | Gói nhiều món | Trả bằng `vnd` (tiền thật), `nguyen_bao` hoặc `bac`. Các cột "Trong gói ..." là số lượng từng món. |
 | Gói nạp | Nạp nguyên bảo bằng tiền thật | "Thưởng lần đầu" cộng thêm ở lần nạp đầu tiên của từng gói. |
@@ -87,3 +88,20 @@ Mỗi tướng có chiến pháp hiện một thanh vàng **sĩ khí** dưới t
 
 - Lấy lại bản trên GitHub, hoặc
 - Chạy `npm run config:export` để tạo lại Excel từ `game-config.json` (bản dữ liệu hợp lệ gần nhất). File cũ được sao lưu thành `DuLieuGame.backup-<số>.xlsx`.
+
+## Trận hình
+
+Lưới 3×3, ô đánh số 1–9: **hàng 1 (ô 1–3) là tiền quân** (gần địch, đỡ đòn cận chiến), hàng 2 (ô 4–6) trung quân, **hàng 3 (ô 7–9) hậu quân** (cung binh và mưu sĩ đứng an toàn hơn). Đánh cận chiến luôn nhắm hàng gần nhất còn quân; tầm xa và chiêu "hàng sau" nhắm hàng xa nhất.
+
+| Cột | Ý nghĩa |
+|---|---|
+| Hàng 1 / 2 / 3 | 3 ký tự `x` (đặt được tướng) hoặc `o` (không), ví dụ `xox` |
+| Hiệu quả | `vat_cong`, `vat_phong`, `muu_cong`, `muu_phong`, `phap_cong`, `phap_phong`, `khong` — tăng cho toàn đội |
+| Hiệu quả gốc, Mỗi cấp cộng, Cộng từ cấp | Hiệu quả = gốc + max(0, cấp − cộng từ cấp + 1) × mỗi cấp. Mặc định 0.15, 0.01, 5 → cấp 20 là 31% |
+| Kiểu xếp | `co_dinh`: ô mở theo **Thứ tự mở ô** (ô thứ nhất mở ở cấp 0, ô thứ hai ở cấp 1…). `tu_do`: đặt ô bất kỳ trong bố cục, số ô theo **Mốc thêm ô** |
+| Mở ở cấp Quân Mạc | Quân Mạc đạt cấp này thì trận hình xuất hiện (ở cấp 0) |
+| Cấp khi bắt đầu | Cấp có sẵn khi tạo game mới |
+
+Giá nâng trận hình nằm ở sheet Cân bằng (`balance.formation.*`). Cấp trận hình không vượt cấp Quân Mạc. Công cụ kiểm tra báo lỗi nếu ô trong Thứ tự mở ô không phải ô `x` của bố cục.
+
+> Pháp công / Pháp phòng: luật chơi đã hỗ trợ loại sát thương Pháp (`phap_cong` ở cột Kiểu sát thương của sheet Binh chủng, cột Phòng pháp công), nhưng hiện chưa binh chủng nào dùng nên Pháp trận và Bào trận chưa có tác dụng.

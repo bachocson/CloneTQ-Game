@@ -11,3 +11,4 @@ export * from './meta.js';
 export * from './battle.js';
 export * from './cheats.js';
 export * from './shop.js';
+export * from './formation.js';

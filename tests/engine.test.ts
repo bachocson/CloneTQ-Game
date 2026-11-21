@@ -125,15 +125,60 @@ test('nhiệm vụ chỉ nhận được khi hoàn thành, và chỉ một lần
   assert.equal(G.claimQuest(s, 'q2').ok, false);
 });
 
-test('đội hình giới hạn số người theo cấp chưởng môn', () => {
+test('trận hình: chỉ đặt tướng vào ô đã mở, nâng cấp mở thêm ô', () => {
   const s = G.newGame(T0, 5);
+  const giap = CFG.formations.find((f) => f.id === 'giapTran')!;
+  assert.equal(s.formation, 'giapTran');
+  assert.equal(G.deployLimit(s), giap.startLevel + 1);
   s.buildings.tuuLau = 3;
   s.res.bac = 1e6;
+  s.items.biKip = 100;
   G.refreshTavern(s, T0, 'free');
   const r = G.recruit(s, s.tavern.candidates[0]);
-  assert.equal(G.setTeamSlot(s, 4, r.hero!.uid).ok, false);
-  s.player.level = 3;
-  assert.ok(G.setTeamSlot(s, 4, r.hero!.uid).ok);
+  const third = giap.unlockOrder[2] - 1; // ô mở ở cấp 2
+  assert.equal(G.setTeamSlot(s, third, r.hero!.uid).ok, false, 'ô chưa mở');
+  assert.equal(G.setTeamSlot(s, 4, r.hero!.uid).ok, false, 'ô 5 (giữa) là o trong Giáp trận');
+  assert.equal(G.upgradeFormation(s, 'giapTran').ok, false, 'cấp trận hình không vượt cấp Quân Mạc');
+  s.buildings.quanMac = 3;
+  assert.ok(G.upgradeFormation(s, 'giapTran').ok);
+  assert.ok(G.setTeamSlot(s, third, r.hero!.uid).ok);
+  assert.equal(G.deployLimit(s), 3);
+});
+
+test('trận hình: hiệu quả theo cấp, đổi trận giữ đội hình, Hư trận đặt tự do', () => {
+  const s = G.newGame(T0, 6);
+  const giap = CFG.formations.find((f) => f.id === 'giapTran')!;
+  assert.equal(G.formationBonus(giap, 0), 0.15);
+  assert.equal(G.formationBonus(giap, 4), 0.15);
+  assert.ok(Math.abs(G.formationBonus(giap, 5) - 0.16) < 1e-9);
+  assert.ok(Math.abs(G.formationBonus(giap, 20) - 0.31) < 1e-9, 'cấp 20 = 31%');
+  assert.equal(G.setFormation(s, 'thapTran').ok, false, 'chưa đủ cấp Quân Mạc');
+  s.buildings.quanMac = 20;
+  const before = s.team.filter(Boolean).length;
+  assert.ok(G.setFormation(s, 'thapTran').ok);
+  assert.equal(s.team.filter(Boolean).length, 1, 'Thập trận cấp 0 chỉ 1 ô');
+  assert.ok(G.setFormation(s, 'giapTran').ok);
+  assert.equal(s.team.filter(Boolean).length, before, 'đổi về giữ đội hình cũ');
+  const hu = CFG.formations.find((f) => f.id === 'huTran')!;
+  assert.equal(G.formationCapacity(hu, 4).max, 1);
+  assert.equal(G.formationCapacity(hu, 20).max, 5);
+  assert.equal(G.formationCapacity(hu, 20).open.length, 9, 'Hư trận đặt được mọi ô');
+  // hiệu quả vào trận: Giáp trận tăng vật phòng toàn đội
+  const u = G.teamUnits(s)[0];
+  assert.equal(u.mods?.def?.ngoai, G.formationBonus(giap, G.formationLevel(s, 'giapTran')));
+});
+
+test('save cũ đội hình 6 ô được chuyển sang lưới 9 ô', () => {
+  const s = G.newGame(T0, 7);
+  const raw = JSON.parse(G.serialize(s));
+  raw.team = [raw.heroes[1].uid, raw.heroes[0].uid, null, null, null, null];
+  delete raw.formation;
+  delete raw.formations;
+  delete raw.formationTeams;
+  const back = G.deserialize(JSON.stringify(raw), T0);
+  assert.equal(back.team.length, 9);
+  assert.equal(back.formation, 'giapTran');
+  assert.equal(back.team.filter(Boolean).length, 2);
 });
 
 test('công cụ test: cộng tài nguyên, đầy kho, tua giờ, mở chương, thêm tướng', () => {

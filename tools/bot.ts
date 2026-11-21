@@ -45,7 +45,7 @@ function clone(s: GameState): GameState {
   return JSON.parse(JSON.stringify(s));
 }
 
-const BUILD_WEIGHT: Record<string, number> = { chinhDien: 0, ruong: 1, xuongGo: 1, moSat: 1.1, tienTrang: 1, khoHang: 1.2, luyenVo: 0.9, tuuLau: 1.6, loRen: 1.3, tangKinh: 1.8 };
+const BUILD_WEIGHT: Record<string, number> = { quanMac: 1.1, chinhDien: 0, ruong: 1, xuongGo: 1, moSat: 1.1, tienTrang: 1, khoHang: 1.2, luyenVo: 0.9, tuuLau: 1.6, loRen: 1.3, tangKinh: 1.8 };
 
 function chooseBuilding(now: number) {
   if (state.queue) return;
@@ -73,12 +73,30 @@ function heroValue(h: Hero) {
   return G.heroPower(state, h) + HEROES[h.tid].q * 40;
 }
 
+const FORMATION_PREF: Record<string, number> = { vatCong: 3, vatPhong: 2, muuCong: 1, muuPhong: 1, phapCong: 0, phapPhong: 0, none: 0.5 };
+
+/** Nâng trận hình đang dùng nếu dư dả, chọn trận hình nhiều ô nhất (hòa thì ưu tiên tăng vật công) */
+function formations() {
+  for (const f of CFG.formations) {
+    if (G.formationLevel(state, f.id) < 0) continue;
+    const chk = G.formationUpgradeCheck(state, f.id);
+    if (!chk.ok || !chk.cost) continue;
+    if (f.id !== state.formation && G.formationLevel(state, f.id) >= 4) continue;
+    if (state.res.bac >= chk.cost.bac * 1.5) G.upgradeFormation(state, f.id);
+  }
+  const best = CFG.formations
+    .filter((f) => G.formationLevel(state, f.id) >= 0)
+    .map((f) => ({ f, cap: G.formationCapacity(f, G.formationLevel(state, f.id)).max }))
+    .sort((a, b) => b.cap - a.cap || FORMATION_PREF[b.f.stat] - FORMATION_PREF[a.f.stat])[0];
+  if (best && best.f.id !== state.formation) G.setFormation(state, best.f.id);
+}
+
 function arrangeTeam() {
-  const limit = G.deployLimit(state);
-  const sorted = [...state.heroes].sort((a, b) => heroValue(b) - heroValue(a)).slice(0, limit);
-  const team: (number | null)[] = [null, null, null, null, null, null];
-  const front = [1, 0, 2, 4, 3, 5];
-  const back = [4, 3, 5, 1, 0, 2];
+  const { open, max } = G.activeCapacity(state);
+  const sorted = [...state.heroes].sort((a, b) => heroValue(b) - heroValue(a)).slice(0, max);
+  const team: (number | null)[] = Array(9).fill(null);
+  const front = [...open].sort((a, b) => a - b); // tiền quân trước
+  const back = [...open].sort((a, b) => b - a); // hậu quân trước
   for (const h of sorted) {
     const order = TROOP_TYPES[h.troopType].range === 'ranged' ? back : front;
     const slot = order.find((s) => team[s] === null);
@@ -207,6 +225,7 @@ function checkin(now: number) {
   if (['luong', 'go', 'sat', 'bac'].some((r) => state.res[r] >= cap)) counters.capped++;
   for (const q of G.questList(state)) if (q.done && !q.claimed) G.claimQuest(state, q.id);
   tavern(now);
+  formations();
   arrangeTeam();
   growHeroes();
   smithy(now);

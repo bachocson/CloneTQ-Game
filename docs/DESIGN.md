@@ -34,6 +34,7 @@ Kinh nghiệm Chúa Công ──► mở cấp công trình, số người xuấ
 | Lò rèn: rèn, cường hóa | Có | 3 ô trang bị, 5 bậc, 4 phẩm chất |
 | Nhiệm vụ chính tuyến | Có | 22 nhiệm vụ dẫn người chơi qua từng hệ thống |
 | Cửa hàng | Có | Gói ưu đãi (ngày/tuần/một lần), gói nạp nguyên bảo (thưởng lần đầu), vật phẩm mua bằng nguyên bảo hoặc bạc. Thanh toán tiền thật chưa kết nối |
+| Trận hình (Quân Mạc) | Có | 7 trận hình trên lưới 3×3 (tiền/trung/hậu quân), mở ô theo cấp, tăng một chỉ số cho toàn đội; Hư trận đặt tự do. Quân Mạc quản lý trận hình và võ tướng |
 | Tri kỷ, hậu duệ (kiểu nuôi dưỡng) | Chưa | Bản sau: tri kỷ cộng chỉ số, đủ thân mật thì có binh lính chân truyền để nuôi |
 | Chiến mã / linh thú | Chưa | Cộng chỉ số toàn đội, nâng theo bậc |
 | Binh thư / trận pháp | Chưa | Kích hoạt ở lượt 3 và 6 |

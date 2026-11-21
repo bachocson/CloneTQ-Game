@@ -80,15 +80,20 @@ export interface SkillDef {
   vfx?: SkillVfx;
 }
 
+/** ngoai = vật công, doc = mưu công, phap = pháp công */
+export type DmgType = 'ngoai' | 'doc' | 'phap';
+
 export interface TroopDef {
   name: string;
   desc: string;
-  dmgType: 'ngoai' | 'doc';
+  dmgType: DmgType;
   range: 'melee' | 'ranged';
   hp: number;
   atk: number;
   defNgoai: number;
   defDoc: number;
+  /** phòng pháp công; bỏ trống thì bằng phòng mưu */
+  defPhap?: number;
   speed: number;
   beats: string[];
   tiers: string[];
@@ -120,6 +125,30 @@ export interface QuestDef {
   desc: string;
   cond: { type: QuestCondType; target?: string; value: number };
   reward: Cost;
+}
+
+/** Chỉ số trận hình tăng cho toàn đội */
+export type FormationStat = 'vatCong' | 'vatPhong' | 'muuCong' | 'muuPhong' | 'phapCong' | 'phapPhong' | 'none';
+
+/** Trận hình: lưới 3×3, ô đánh số 1–9 theo hàng (1–3 tiền quân, 4–6 trung quân, 7–9 hậu quân) */
+export interface FormationDef {
+  id: string;
+  name: string;
+  desc: string;
+  /** 3 chuỗi, mỗi chuỗi 3 ký tự: x = đặt được tướng, o = không */
+  rows: [string, string, string];
+  stat: FormationStat;
+  /** hiệu quả = basePct + max(0, cấp - perLevelFrom + 1) × perLevelPct */
+  basePct: number;
+  perLevelPct: number;
+  perLevelFrom: number;
+  maxLevel: number;
+  /** fixed: ô mở theo thứ tự unlockOrder (phần tử thứ i mở ở cấp i); free: đặt ô bất kỳ, số ô theo freeCountLevels */
+  mode: 'fixed' | 'free';
+  unlockOrder: number[];
+  freeCountLevels: number[];
+  reqQuanMac: number;
+  startLevel: number;
 }
 
 export type ShopLimit = 'none' | 'daily' | 'weekly' | 'once';
@@ -241,16 +270,17 @@ export interface BalanceConfig {
     sellRatio: number;
   };
   releaseExpRefund: number;
-  /** chi phí bạc nâng tuyệt kỹ = floor(base * cấp^exp); bí kíp = cấp hiện tại */
+  /** chi phí bạc nâng chiến pháp = floor(base * cấp^exp); tàn quyển = cấp hiện tại */
   skillCostBac: PowerFormula;
-  /** cứ mỗi bao nhiêu cấp hiệp khách thì được thêm 1 cấp tuyệt kỹ tối đa */
+  /** cứ mỗi bao nhiêu cấp võ tướng thì được thêm 1 cấp chiến pháp tối đa */
   skillHeroLevelStep: number;
+  /** giá nâng trận hình lên cấp L+1: bạc = costBacBase × costBacGrowth^L, tàn quyển = costBiKipBase + L × costBiKipPerLevel */
+  formation: { costBacBase: number; costBacGrowth: number; costBiKipBase: number; costBiKipPerLevel: number };
 }
 
 export interface GameConfig {
   version: string;
   balance: BalanceConfig;
-  deploySlots: { level: number; slots: number }[];
   factionBonus: { count: number; bonus: number }[];
   resources: Record<string, ResourceDef>;
   items: Record<string, ItemDef>;
@@ -272,6 +302,7 @@ export interface GameConfig {
   shop: ShopItemDef[];
   packs: PackDef[];
   topups: TopupDef[];
+  formations: FormationDef[];
 }
 
 // ---------- State lưu game ----------
@@ -316,7 +347,14 @@ export interface GameState {
   buildings: Record<string, number>;
   queue: BuildQueue | null;
   heroes: Hero[];
+  /** đội hình của trận hình đang dùng, 9 ô (0–8) */
   team: (number | null)[];
+  /** trận hình đang dùng */
+  formation: string;
+  /** cấp trận hình đã nâng (trận hình đã mở mà chưa có ở đây là cấp 0) */
+  formations: Record<string, number>;
+  /** đội hình đã xếp cho từng trận hình, để đổi qua lại không mất */
+  formationTeams: Record<string, (number | null)[]>;
   troopTiers: Record<string, number>;
   equipment: Equipment[];
   campaign: { stars: Record<string, number> };

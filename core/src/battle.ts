@@ -3,7 +3,7 @@
 
 import { cfg, tierMult } from './config.js';
 import { mulberry32 } from './rng.js';
-import type { SkillDef, StatKey, Stats } from './types.js';
+import type { DmgType, SkillDef, StatKey, Stats } from './types.js';
 
 export interface UnitLook {
   kind: 'hero' | 'enemy';
@@ -24,6 +24,8 @@ export interface BattleUnit {
   maxTroops: number;
   skill: { id: string; lv: number } | null;
   bonus: number;
+  /** cộng % công / phòng theo loại sát thương (từ trận hình) */
+  mods?: { atk?: Partial<Record<DmgType, number>>; def?: Partial<Record<DmgType, number>> };
   look?: UnitLook;
 }
 
@@ -58,7 +60,8 @@ export interface BattleResult {
   lossRatio: number;
 }
 
-const isFront = (u: BattleUnit) => u.slot < 3;
+// Ô 0–8: hàng = ô / 3 (0 tiền quân, 1 trung quân, 2 hậu quân), cột = ô % 3
+const rowOf = (u: BattleUnit) => Math.floor(u.slot / 3);
 const lane = (u: BattleUnit) => u.slot % 3;
 const alive = <T extends BattleUnit>(list: T[]) => list.filter((u) => u.troops > 0);
 
@@ -75,12 +78,13 @@ function pickByLane<T extends BattleUnit>(candidates: T[], fromLane: number): T 
   return best;
 }
 
+/** Hàng gần nhất còn quân (đánh cận chiến) hoặc hàng xa nhất còn quân (đánh tầm xa, chiêu "hàng sau") */
 function rowTargets<T extends BattleUnit>(enemies: T[], preferBack: boolean): T[] {
   const live = alive(enemies);
-  const front = live.filter(isFront);
-  const back = live.filter((u) => !isFront(u));
-  if (preferBack) return back.length ? back : front;
-  return front.length ? front : back;
+  if (!live.length) return [];
+  const rows = live.map(rowOf);
+  const target = preferBack ? Math.max(...rows) : Math.min(...rows);
+  return live.filter((u) => rowOf(u) === target);
 }
 
 function normalTarget<T extends BattleUnit>(att: BattleUnit, enemies: T[]): T | null {
@@ -132,12 +136,13 @@ export function computeHit(
   const dmgType = ta.dmgType;
   const sa = att.stats;
   const sd = def.stats;
-  const atkStat = stat ? sa[stat] : dmgType === 'doc' ? sa.ngoTinh * 0.7 + sa.voLuc * 0.3 : sa.voLuc;
-  const atkMul = 1 + (att.bonus || 0) + buffSum(att, 'buffAtk') - buffSum(att, 'atkDown');
+  const atkStat = stat ? sa[stat] : dmgType === 'doc' ? sa.ngoTinh * 0.7 + sa.voLuc * 0.3 : dmgType === 'phap' ? sa.ngoTinh * 0.85 + sa.voLuc * 0.15 : sa.voLuc;
+  const atkMul = 1 + (att.bonus || 0) + (att.mods?.atk?.[dmgType] ?? 0) + buffSum(att, 'buffAtk') - buffSum(att, 'atkDown');
   const atk = atkStat * ta.atk * tierMult(att.tier) * Math.max(0.2, atkMul);
-  const defStat = dmgType === 'doc' ? sd.ngoTinh * 0.6 + sd.canCot * 0.4 : sd.canCot * 0.8 + sd.voLuc * 0.2;
-  const defMul = Math.max(0.2, 1 - buffSum(def, 'defDown'));
-  const defense = defStat * (dmgType === 'doc' ? td.defDoc : td.defNgoai) * tierMult(def.tier) * defMul;
+  const defStat = dmgType === 'doc' ? sd.ngoTinh * 0.6 + sd.canCot * 0.4 : dmgType === 'phap' ? sd.ngoTinh * 0.5 + sd.canCot * 0.5 : sd.canCot * 0.8 + sd.voLuc * 0.2;
+  const defMul = Math.max(0.2, 1 + (def.mods?.def?.[dmgType] ?? 0) - buffSum(def, 'defDown'));
+  const troopDef = dmgType === 'doc' ? td.defDoc : dmgType === 'phap' ? td.defPhap ?? td.defDoc : td.defNgoai;
+  const defense = defStat * troopDef * tierMult(def.tier) * defMul;
   const base = (atk * 100) / (100 + defense);
 
   let counter = 1;

@@ -51,7 +51,7 @@ export function stageEnemies(id: string): BattleUnit[] {
   const tier = Math.min(cfg().tiers.length, 1 + Math.floor(index / E.tierEveryStages));
   const units: BattleUnit[] = [];
   const frontSlots = [1, 0, 2];
-  const backSlots = [4, 3, 5];
+  const backSlots = [7, 6, 8]; // hậu quân
   let fi = 0;
   let bi = 0;
   for (let i = 0; i < count; i++) {

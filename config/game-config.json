@@ -151,26 +151,14 @@
       "base": 500,
       "exp": 1.5
     },
-    "skillHeroLevelStep": 5
-  },
-  "deploySlots": [
-    {
-      "level": 1,
-      "slots": 2
-    },
-    {
-      "level": 3,
-      "slots": 3
-    },
-    {
-      "level": 8,
-      "slots": 4
-    },
-    {
-      "level": 14,
-      "slots": 5
+    "skillHeroLevelStep": 5,
+    "formation": {
+      "costBacBase": 800,
+      "costBacGrowth": 1.32,
+      "costBiKipBase": 1,
+      "costBiKipPerLevel": 1
     }
-  ],
+  },
   "factionBonus": [
     {
       "count": 3,
@@ -247,6 +235,21 @@
       "timeGrowth": 1.42,
       "unlockLevel": 1,
       "startLevel": 2
+    },
+    "quanMac": {
+      "name": "Quân Mạc",
+      "desc": "Bày trận và quản lý võ tướng. Cấp trận hình không vượt quá cấp Quân Mạc; Quân Mạc cấp cao mở thêm trận hình mới.",
+      "roof": "#9e3426",
+      "cost": {
+        "go": 200,
+        "sat": 80,
+        "bac": 150
+      },
+      "costGrowth": 1.5,
+      "timeBase": 15,
+      "timeGrowth": 1.42,
+      "unlockLevel": 1,
+      "startLevel": 1
     },
     "ruong": {
       "name": "Nông Trại",
@@ -398,6 +401,7 @@
   },
   "buildingOrder": [
     "chinhDien",
+    "quanMac",
     "ruong",
     "xuongGo",
     "moSat",
@@ -2408,6 +2412,190 @@
       "nguyenbao": 3600,
       "firstBonus": 3600,
       "badge": ""
+    }
+  ],
+  "formations": [
+    {
+      "id": "giapTran",
+      "name": "Giáp trận",
+      "desc": "Tiền quân dày, đỡ đòn vật công.",
+      "rows": [
+        "xxx",
+        "xox",
+        "ooo"
+      ],
+      "stat": "vatPhong",
+      "basePct": 0.15,
+      "perLevelPct": 0.01,
+      "perLevelFrom": 5,
+      "maxLevel": 20,
+      "mode": "fixed",
+      "unlockOrder": [
+        1,
+        2,
+        3,
+        4,
+        6
+      ],
+      "freeCountLevels": [],
+      "reqQuanMac": 1,
+      "startLevel": 1
+    },
+    {
+      "id": "thapTran",
+      "name": "Thập trận",
+      "desc": "Hình chữ thập, dồn lực vật công.",
+      "rows": [
+        "oxo",
+        "xxx",
+        "oxo"
+      ],
+      "stat": "vatCong",
+      "basePct": 0.15,
+      "perLevelPct": 0.01,
+      "perLevelFrom": 5,
+      "maxLevel": 20,
+      "mode": "fixed",
+      "unlockOrder": [
+        2,
+        4,
+        5,
+        6,
+        8
+      ],
+      "freeCountLevels": [],
+      "reqQuanMac": 2,
+      "startLevel": 0
+    },
+    {
+      "id": "muuTran",
+      "name": "Mưu trận",
+      "desc": "Xếp chéo, tăng mưu công.",
+      "rows": [
+        "xox",
+        "oxo",
+        "xox"
+      ],
+      "stat": "muuCong",
+      "basePct": 0.15,
+      "perLevelPct": 0.01,
+      "perLevelFrom": 5,
+      "maxLevel": 20,
+      "mode": "fixed",
+      "unlockOrder": [
+        1,
+        3,
+        5,
+        7,
+        9
+      ],
+      "freeCountLevels": [],
+      "reqQuanMac": 3,
+      "startLevel": 0
+    },
+    {
+      "id": "phapTran",
+      "name": "Pháp trận",
+      "desc": "Tăng pháp công.",
+      "rows": [
+        "xxx",
+        "oxo",
+        "oxo"
+      ],
+      "stat": "phapCong",
+      "basePct": 0.15,
+      "perLevelPct": 0.01,
+      "perLevelFrom": 5,
+      "maxLevel": 20,
+      "mode": "fixed",
+      "unlockOrder": [
+        1,
+        2,
+        3,
+        5,
+        8
+      ],
+      "freeCountLevels": [],
+      "reqQuanMac": 4,
+      "startLevel": 0
+    },
+    {
+      "id": "thuanTran",
+      "name": "Thuẫn trận",
+      "desc": "Tăng mưu phòng.",
+      "rows": [
+        "xox",
+        "xox",
+        "oxo"
+      ],
+      "stat": "muuPhong",
+      "basePct": 0.15,
+      "perLevelPct": 0.01,
+      "perLevelFrom": 5,
+      "maxLevel": 20,
+      "mode": "fixed",
+      "unlockOrder": [
+        1,
+        3,
+        4,
+        6,
+        8
+      ],
+      "freeCountLevels": [],
+      "reqQuanMac": 5,
+      "startLevel": 0
+    },
+    {
+      "id": "baoTran",
+      "name": "Bào trận",
+      "desc": "Tăng pháp phòng.",
+      "rows": [
+        "xox",
+        "ooo",
+        "xxx"
+      ],
+      "stat": "phapPhong",
+      "basePct": 0.15,
+      "perLevelPct": 0.01,
+      "perLevelFrom": 5,
+      "maxLevel": 20,
+      "mode": "fixed",
+      "unlockOrder": [
+        1,
+        3,
+        7,
+        8,
+        9
+      ],
+      "freeCountLevels": [],
+      "reqQuanMac": 6,
+      "startLevel": 0
+    },
+    {
+      "id": "huTran",
+      "name": "Hư trận",
+      "desc": "Không tăng chỉ số, đặt tướng vào ô bất kỳ.",
+      "rows": [
+        "xxx",
+        "xxx",
+        "xxx"
+      ],
+      "stat": "none",
+      "basePct": 0.15,
+      "perLevelPct": 0.01,
+      "perLevelFrom": 5,
+      "maxLevel": 20,
+      "mode": "free",
+      "unlockOrder": [],
+      "freeCountLevels": [
+        0,
+        5,
+        10,
+        15,
+        20
+      ],
+      "reqQuanMac": 8,
+      "startLevel": 0
     }
   ]
 }

@@ -529,6 +529,56 @@ function lantern(g, x, y) {
 }
 
 const KIND_DRAW = {
+  quanMac(g, c) {
+    // doanh trại: lều chỉ huy, cờ hiệu, giá binh khí
+    platform(g, 0, 10, 58, '#c9a878');
+    ellipse(g, 0, 12, 46, 16);
+    g.fillStyle = 'rgba(0,0,0,0.12)';
+    g.fill();
+    g.beginPath();
+    g.moveTo(-44, 10);
+    g.quadraticCurveTo(-30, -20, 0, -58);
+    g.quadraticCurveTo(30, -20, 44, 10);
+    g.quadraticCurveTo(0, 26, -44, 10);
+    fillStroke(g, '#f1e3c4');
+    g.beginPath();
+    g.moveTo(0, -58);
+    g.quadraticCurveTo(30, -20, 44, 10);
+    g.quadraticCurveTo(22, 20, 0, 18);
+    g.closePath();
+    fillStroke(g, '#d9c49a', 2.5);
+    for (const t of [0.35, 0.7]) {
+      g.beginPath();
+      g.moveTo(-44 * t - 2, 10 - 68 * (1 - t) + 2);
+      g.quadraticCurveTo(0, 26 * t - 18 * (1 - t), 44 * t + 2, 10 - 68 * (1 - t) + 2);
+      g.lineWidth = 5;
+      g.strokeStyle = c;
+      g.stroke();
+    }
+    // cửa lều
+    g.beginPath();
+    g.moveTo(-12, 16);
+    g.lineTo(-4, -12);
+    g.lineTo(4, -12);
+    g.lineTo(12, 16);
+    g.closePath();
+    fillStroke(g, '#5a3420', 2.5);
+    // chỏm và cờ
+    flag(g, 0, -56, c);
+    flag(g, -48, 16, c);
+    // giá binh khí
+    for (let i = 0; i < 3; i++) {
+      g.beginPath();
+      g.moveTo(34 + i * 6, 18 - i * 2);
+      g.lineTo(38 + i * 6, -14 - i * 2);
+      g.lineWidth = 4;
+      g.strokeStyle = OUT;
+      g.stroke();
+      g.lineWidth = 2;
+      g.strokeStyle = '#d6dde6';
+      g.stroke();
+    }
+  },
   chinhDien(g, c, lv) {
     platform(g, 0, 10, 62, '#d9c79c');
     isoBox(g, 0, 4, 44, 26, '#f1e3c4');

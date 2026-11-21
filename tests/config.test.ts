@@ -76,3 +76,13 @@ test('mã tham chiếu sai được phát hiện', () => {
   assert.match(errs, /lieuHoa: chiến pháp "khongCo" không có trong sheet Chiến pháp/);
   assert.match(errs, /ải "9-9" không tồn tại/);
 });
+
+test('trận hình: ô trong thứ tự mở không nằm trong bố cục thì báo lỗi', () => {
+  const bad = structuredClone(cfg);
+  const thuan = bad.formations.find((f) => f.id === 'thuanTran')!;
+  thuan.unlockOrder = [1, 2, 3, 4, 6]; // như bản Excel gốc: ô 2 là "o" trong bố cục x o x
+  thuan.rows[0] = 'xoxx';
+  const errs = validateConfig(bad).join('\n');
+  assert.match(errs, /thuanTran: ô 2 trong Thứ tự mở ô không phải ô "x" của bố cục/);
+  assert.match(errs, /thuanTran: hàng 1 = "xoxx" phải gồm đúng 3 ký tự x hoặc o/);
+});
