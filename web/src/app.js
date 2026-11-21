@@ -551,7 +551,7 @@ function viewTavern() {
           ${img(heroImg(tid, t.school), '')}
           <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
             <div class="row"><b>${esc(t.name)}</b><span class="q-tag" style="color:${QUALITIES[t.q].color}">${QUALITIES[t.q].name}</span></div>
-            <span class="muted">${FACTIONS[t.faction].name} · sở trường ${TROOP_TYPES[t.school].name} · ${esc(SKILLS[t.skill].name)}</span>
+            <span class="muted">${FACTIONS[t.faction].name} · ${TROOP_TYPES[t.school].name} ★, ${TROOP_TYPES[t.school2].name} · ${esc(SKILLS[t.skill].name)}</span>
             <span class="muted num">Thống Soái ${t.base[0]} (+${t.growth[0]}) · Võ ${t.base[1]} (+${t.growth[1]}) · Ngộ ${t.base[2]} (+${t.growth[2]})</span>
             <p style="font-size:12px">${esc(t.bio)}</p>
             <div class="row">${costHtml({ bac: cost })}<span class="spacer"></span><button class="btn small" data-act="recruit" data-id="${tid}" ${S.res.bac >= cost ? '' : 'disabled'}>Chiêu mộ</button></div>
@@ -583,6 +583,7 @@ function viewTrain() {
         <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
           <div class="row"><b>${tt.name}</b><span class="chip">Bậc ${tier}/5</span><span class="spacer"></span><span class="muted">${esc(tt.tiers[tier - 1])}</span></div>
           <p class="muted">${esc(tt.desc)}</p>
+          <div class="row wrap">${C.troopVariants.filter((v) => v.troop === type).map((v) => `<span class="chip" title="${esc(v.desc)}">${esc(v.name)}</span>`).join('')}</div>
           <span class="muted num">Máu/lính ${(tt.hp * m).toFixed(1)} · Công ×${(tt.atk * m).toFixed(2)} · Tốc ${tt.speed}</span>
           ${next ? `<div class="row wrap">${costHtml(next.cost)}<span class="muted">Giáo Trường ${next.reqLuyenVo}</span></div>
           <div class="row"><span class="muted">${chk.ok ? `Lên: ${esc(tt.tiers[tier])}` : esc(chk.reason)}</span><span class="spacer"></span><button class="btn small" data-act="research" data-id="${type}" ${chk.ok ? '' : 'disabled'}>Nghiên cứu</button></div>` : '<span class="muted">Đã đạt bậc cao nhất</span>'}
@@ -616,7 +617,7 @@ function heroSheet(uid) {
       <div class="art" style="background:radial-gradient(circle at 50% 35%,#fff6,transparent 60%),${FACTIONS[t.faction].color};border-color:var(--ink);box-shadow:inset 0 0 0 3px ${QUALITIES[t.q].color}">${img(heroImg(h.tid, h.troopType))}</div>
       <div style="flex:1;min-width:0">
         <div class="row"><h3 style="font-size:21px">${esc(t.name)}</h3><span class="spacer"></span><button class="btn small ghost" data-act="closeSheet">✕</button></div>
-        <div class="row wrap"><span class="chip" style="background:${QUALITIES[t.q].color}">${QUALITIES[t.q].name}</span><span class="chip" style="background:${FACTIONS[t.faction].color};color:#fff">${FACTIONS[t.faction].name}</span><span class="chip">${TROOP_TYPES[t.school].name}</span></div>
+        <div class="row wrap"><span class="chip" style="background:${QUALITIES[t.q].color}">${QUALITIES[t.q].name}</span><span class="chip" style="background:${FACTIONS[t.faction].color};color:#fff">${FACTIONS[t.faction].name}</span><span class="chip">${TROOP_TYPES[t.school].name} · ${TROOP_TYPES[t.school2].name}</span></div>
         <p class="muted" style="margin-top:4px">${esc(t.bio)}</p>
       </div>
     </div>
@@ -636,9 +637,13 @@ function heroSheet(uid) {
     </div>
     <div>
       <div class="row"><b>Binh chủng</b><span class="spacer"></span><span class="num">${fmt(h.troops)}/${fmt(max)}</span></div>
-      ${bar(h.troops, max, 'blood')}
-      <div class="seg" style="margin-top:6px">${TROOP_ORDER.map((ty) => `<button class="${h.troopType === ty ? 'on' : ''}" data-act="troopType" data-uid="${uid}" data-id="${ty}">${TROOP_TYPES[ty].name}${ty === t.school ? '★' : ''}</button>`).join('')}</div>
-      <p class="muted" style="margin-top:4px">${esc(TROOP_TYPES[h.troopType].tiers[S.troopTiers[h.troopType] - 1])} (bậc ${S.troopTiers[h.troopType]}). Đổi hệ sẽ giải tán binh lính hiện có. ★ là sở trường: +${Math.round(BAL.combat.schoolBonus * 100)}% công.</p>
+      ${bar(h.troops, max, 'red')}
+      <div class="troop-pick">${G.heroClasses(h.tid).map((ty) => `<button class="tp ${h.troopType === ty ? 'on' : ''}" data-act="troopType" data-uid="${uid}" data-id="${ty}">
+          ${img(heroSprite(['#6a5a48', '#4a3e30', '#2a2018', '#c0a070'], ty))}
+          <span class="tp-txt"><b>${TROOP_TYPES[ty].name}${ty === t.school ? ' ★' : ''}</b><span class="tp-var disp">${esc(G.variantName(h, ty)) || '—'}</span><small>Bậc ${S.troopTiers[ty]}</small></span>
+        </button>`).join('')}</div>
+      <div class="row wrap" style="margin-top:6px"><span class="muted" style="flex:1;min-width:0">Chạm để chọn binh chủng ra trận. Đổi binh chủng sẽ giải tán binh lính hiện có. ★ sở trường: +${Math.round(BAL.combat.schoolBonus * 100)}% công.</span>
+        <button class="btn small gold" data-act="rerollVariant" data-uid="${uid}" ${(S.res.nguyenbao || 0) >= BAL.variantRerollCost ? '' : 'disabled'}>Đổi loại · ${BAL.variantRerollCost} ${img(icon('nguyenbao'))}</button></div>
       <div class="row" style="margin-top:6px">${h.troops < max ? costHtml(G.refillCost(S, h, max - h.troops)) : '<span class="muted">Đủ quân</span>'}<span class="spacer"></span><button class="btn small " data-act="refillOne" data-uid="${uid}" ${h.troops < max ? '' : 'disabled'}>Bổ sung</button></div>
     </div>
     <div class="panel">
@@ -1363,6 +1368,7 @@ const ACTIONS = {
   backToHero: (d) => { ui.sheet = { type: 'hero', uid: Number(d.uid) }; renderSheet(); },
   useExp: (d) => act(() => G.useExpItem(S, Number(d.uid), d.id, Number(d.n))),
   troopType: (d) => act(() => G.setTroopType(S, Number(d.uid), d.id)),
+  rerollVariant: (d) => act(() => G.rerollVariants(S, Number(d.uid))),
   refillOne: (d) => act(() => { const n = G.refillHero(S, G.findHero(S, Number(d.uid))); return n ? { ok: true, msg: `Bổ sung ${n} binh lính` } : { ok: false, reason: 'Không đủ lương thực hoặc bạc' }; }),
   refillTeam: () => act(() => { const n = G.refillTeam(S); return n ? { ok: true, msg: `Bổ sung ${n} binh lính` } : { ok: false, reason: 'Không đủ lương thực hoặc bạc' }; }),
   toggleRefill: () => { S.settings.autoRefill = !S.settings.autoRefill; save(); renderAll(); },

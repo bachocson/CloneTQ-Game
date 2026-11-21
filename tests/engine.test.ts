@@ -233,3 +233,37 @@ test('cửa hàng: mua vật phẩm, giới hạn theo ngày, gói ưu đãi, n�
   assert.equal(G.grantPurchase(s, 'goiTanThu', T0, { test: true }).ok, false, 'gói một lần');
   assert.equal(s.shop.testPurchases, 3);
 });
+
+test('binh chủng: mỗi tướng 2 binh chủng, mỗi binh chủng có loại, đổi loại tốn nguyên bảo', () => {
+  const s = G.newGame(T0, 21);
+  const h = s.heroes[0];
+  const [c1, c2] = G.heroClasses(h.tid);
+  assert.notEqual(c1, c2);
+  assert.ok(G.variantsOf(c1).some((v) => v.id === h.variants[c1]), 'có sẵn loại cho binh chủng 1');
+  assert.ok(G.variantsOf(c2).some((v) => v.id === h.variants[c2]), 'có sẵn loại cho binh chủng 2');
+  const other = CFG.troopOrder.find((t) => t !== c1 && t !== c2)!;
+  assert.equal(G.setTroopType(s, h.uid, other).ok, false, 'không dẫn được binh chủng ngoài 2 cái của mình');
+  assert.ok(G.setTroopType(s, h.uid, c2).ok);
+
+  s.res.nguyenbao = CFG.balance.variantRerollCost * 50;
+  const seen = new Set<string>();
+  for (let i = 0; i < 50; i++) {
+    const r = G.rerollVariants(s, h.uid);
+    assert.ok(r.ok);
+    seen.add(h.variants[c1]);
+  }
+  assert.equal(s.res.nguyenbao, 0, 'mỗi lần đổi trừ đúng giá');
+  assert.equal(seen.size, G.variantsOf(c1).length, '50 lần đổi ra đủ các loại');
+  assert.equal(G.rerollVariants(s, h.uid).ok, false, 'hết nguyên bảo thì không đổi được');
+});
+
+test('save cũ chưa có loại binh chủng được bổ sung, binh chủng sai được sửa', () => {
+  const s = G.newGame(T0, 22);
+  const raw = JSON.parse(G.serialize(s));
+  delete raw.heroes[0].variants;
+  const [c1, c2] = G.heroClasses(raw.heroes[1].tid);
+  raw.heroes[1].troopType = CFG.troopOrder.find((t: string) => t !== c1 && t !== c2);
+  const back = G.deserialize(JSON.stringify(raw), T0);
+  assert.ok(Object.keys(back.heroes[0].variants).length === 2);
+  assert.equal(back.heroes[1].troopType, c1);
+});

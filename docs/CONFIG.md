@@ -33,9 +33,10 @@ Không chạy `choi-thu.bat` thì bấm đúp `cap-nhat-du-lieu.bat` sau khi lư
 | Tài nguyên, Vật phẩm | Tên và mô tả | Mã `luong, go, sat, bac, nguyenbao, tieuHoanDan, huyenThiet, biKip` là bắt buộc. |
 | Công trình | Giá, thời gian, sản lượng, cấp mở | Giá cấp N = giá gốc × hệ số giá^(N−1). Thứ tự dòng = thứ tự hiển thị. |
 | Phe, Phẩm chất | Phe phái, phẩm chất võ tướng, tỉ lệ gặp ở tửu quán, giá chiêu mộ | |
-| Võ tướng | Chỉ số gốc, trưởng thành, sở trường, chiến pháp, màu sắc | Chỉ số cấp N = gốc + trưởng thành × (N−1). |
+| Võ tướng | Chỉ số gốc, trưởng thành, 2 binh chủng, chiến pháp, màu sắc | Chỉ số cấp N = gốc + trưởng thành × (N−1). Mỗi tướng có đúng 2 binh chủng (Binh chủng 1 là sở trường, được cộng công). |
 | Chiến pháp | Mục tiêu, hệ số, hiệu ứng | Xem cách viết hiệu ứng bên dưới. |
 | Binh chủng, Bậc binh chủng | 4 hệ, chỉ số, khắc chế, tên và giá từng bậc | Số tên bậc ở sheet Binh chủng phải bằng số dòng sheet Bậc binh chủng. |
+| Loại binh chủng | Các loại trong từng binh chủng (vd Thương binh: Kích Vệ, Thương Vệ, Giáo Vệ) | Cột Binh chủng là mã binh chủng; Tỉ lệ ra là trọng số khi đổi ngẫu nhiên. Mỗi binh chủng cần ít nhất 1 loại. Cách các loại hoạt động sẽ bổ sung sau. |
 | Chương | Tên, cấp yêu cầu, tên lính, trùm | Đội địch tự sinh theo các dòng `balance.enemy.*` ở sheet Cân bằng. |
 | Ô trang bị, Phẩm trang bị | Tên trang bị theo bậc, tỉ lệ phẩm khi rèn | |
 | Nhiệm vụ | Điều kiện và phần thưởng | Đối tượng: mã công trình, hoặc mã ải dạng `chương-ải` như `2-5`. |
@@ -105,3 +106,7 @@ Lưới 3×3, ô đánh số 1–9: **hàng 1 (ô 1–3) là tiền quân** (g�
 Giá nâng trận hình nằm ở sheet Cân bằng (`balance.formation.*`). Cấp trận hình không vượt cấp Quân Mạc. Công cụ kiểm tra báo lỗi nếu ô trong Thứ tự mở ô không phải ô `x` của bố cục.
 
 > Pháp công / Pháp phòng: luật chơi đã hỗ trợ loại sát thương Pháp (`phap_cong` ở cột Kiểu sát thương của sheet Binh chủng, cột Phòng pháp công), nhưng hiện chưa binh chủng nào dùng nên Pháp trận và Bào trận chưa có tác dụng.
+
+## Loại binh chủng và nút đổi loại
+
+Mỗi tướng có 2 binh chủng, mỗi binh chủng đang mang một **loại** (vd Kỵ binh · Quân Tượng). Trong bảng chi tiết tướng, nút **Đổi loại** tốn `balance.variantRerollCost` nguyên bảo (mặc định 10) và chọn ngẫu nhiên lại loại cho **cả 2** binh chủng, theo cột Tỉ lệ ra. Tướng mới chiêu mộ được chọn ngẫu nhiên sẵn một loại cho mỗi binh chủng.

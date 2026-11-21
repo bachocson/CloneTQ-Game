@@ -2,10 +2,29 @@
 
 import { cfg, maxTroopsFor } from './config.js';
 import { GRID, cleanTeam, formationCapacity, isFormationUnlocked } from './formation.js';
+import { rand, weightedPick } from './rng.js';
 import type { GameState, Hero } from './types.js';
 
 export const SAVE_VERSION = 1;
 export const SAVE_KEY = 'tamquoc_tranhba_save_v1';
+
+/** Các loại của một binh chủng */
+export function variantsOf(troop: string) {
+  return (cfg().troopVariants ?? []).filter((v) => v.troop === troop);
+}
+
+/** Chọn ngẫu nhiên một loại cho binh chủng (theo trọng số) */
+export function pickVariant(state: GameState, troop: string): string {
+  const list = variantsOf(troop);
+  if (!list.length) return '';
+  return list[weightedPick(rand(state), list.map((v) => v.weight))].id;
+}
+
+/** Hai binh chủng của một tướng */
+export function heroClasses(tid: string): [string, string] {
+  const t = cfg().heroes[tid];
+  return [t.school, t.school2];
+}
 
 export function makeHero(state: GameState, tid: string): Hero {
   const t = cfg().heroes[tid];
@@ -15,6 +34,7 @@ export function makeHero(state: GameState, tid: string): Hero {
     level: 1,
     exp: 0,
     troopType: t.school,
+    variants: Object.fromEntries(heroClasses(tid).map((c) => [c, pickVariant(state, c)])),
     troops: 0,
     skillLv: 1,
     equip: Object.fromEntries(Object.keys(cfg().equipSlots).map((k) => [k, null])),
@@ -101,5 +121,13 @@ export function deserialize(json: string, now: number): GameState {
     }
   }
   merged.team = cleanTeam(merged, merged.team, merged.formation);
+  // Mỗi tướng chỉ dẫn được 2 binh chủng của mình; save cũ chưa có loại binh chủng thì chọn ngẫu nhiên
+  for (const h of merged.heroes) {
+    if (!cfg().heroes[h.tid]) continue;
+    const classes = heroClasses(h.tid);
+    if (!classes.includes(h.troopType)) { h.troopType = classes[0]; h.troops = 0; }
+    h.variants ??= {};
+    for (const c of classes) if (!h.variants[c] || !variantsOf(c).some((v) => v.id === h.variants[c])) h.variants[c] = pickVariant(merged, c);
+  }
   return merged;
 }

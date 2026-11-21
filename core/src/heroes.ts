@@ -5,6 +5,7 @@ import { activeCapacity, formationMods, formationDef } from './formation.js';
 import { equipStatValue } from './equipment.js';
 import { canAfford, pay, missingFor } from './economy.js';
 import type { BattleUnit } from './battle.js';
+import { heroClasses, pickVariant } from './state.js';
 import type { ActionResult, Cost, GameState, Hero, Stats } from './types.js';
 
 const STAT_KEYS = ['canCot', 'voLuc', 'ngoTinh'] as const;
@@ -109,10 +110,34 @@ export function refillTeam(state: GameState, onlyTeam = true): number {
 export function setTroopType(state: GameState, uid: number, type: string): ActionResult {
   const h = findHero(state, uid);
   if (!h || !cfg().troopTypes[type]) return { ok: false, reason: 'Không hợp lệ' };
+  if (!heroClasses(h.tid).includes(type)) return { ok: false, reason: `${cfg().heroes[h.tid].name} không dẫn được ${cfg().troopTypes[type].name}` };
   if (h.troopType === type) return { ok: true, msg: '' };
   h.troopType = type;
   h.troops = 0; // đổi hệ thì giải tán binh lính cũ
   return { ok: true, msg: `${cfg().heroes[h.tid].name} chuyển sang dẫn ${cfg().troopTypes[type].name}` };
+}
+
+/** Tên loại binh chủng tướng đang có cho một binh chủng */
+export function variantName(h: Hero, troop: string): string {
+  const id = h.variants?.[troop];
+  return (cfg().troopVariants ?? []).find((v) => v.id === id)?.name ?? '';
+}
+
+/** Đổi ngẫu nhiên loại của cả 2 binh chủng, tốn nguyên bảo */
+export function rerollVariants(state: GameState, uid: number): ActionResult & { changes?: { troop: string; from: string; to: string }[] } {
+  const h = findHero(state, uid);
+  if (!h) return { ok: false, reason: 'Không tìm thấy võ tướng' };
+  const cost = cfg().balance.variantRerollCost;
+  if ((state.res.nguyenbao || 0) < cost) return { ok: false, reason: `Cần ${cost} ${cfg().resources.nguyenbao.name}`, missing: { nguyenbao: cost - (state.res.nguyenbao || 0) } };
+  state.res.nguyenbao -= cost;
+  h.variants ??= {};
+  const changes = heroClasses(h.tid).map((troop) => {
+    const from = variantName(h, troop);
+    h.variants[troop] = pickVariant(state, troop);
+    return { troop, from, to: variantName(h, troop) };
+  });
+  const text = changes.map((c) => `${cfg().troopTypes[c.troop].name}: ${c.to}`).join(' · ');
+  return { ok: true, msg: `Đổi loại binh chủng → ${text}`, changes };
 }
 
 export function skillMaxLevel(state: GameState, h: Hero): number {

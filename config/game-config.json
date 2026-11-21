@@ -157,7 +157,8 @@
       "costBacGrowth": 1.32,
       "costBiKipBase": 1,
       "costBiKipPerLevel": 1
-    }
+    },
+    "variantRerollCost": 10
   },
   "factionBonus": [
     {
@@ -478,6 +479,7 @@
       "q": 5,
       "faction": "quan",
       "school": "ky",
+      "school2": "thuong",
       "base": [
         69,
         97,
@@ -502,6 +504,7 @@
       "q": 5,
       "faction": "thuc",
       "school": "ky",
+      "school2": "bo",
       "base": [
         69,
         97,
@@ -526,6 +529,7 @@
       "q": 5,
       "faction": "thuc",
       "school": "muu",
+      "school2": "cung",
       "base": [
         58,
         43,
@@ -550,6 +554,7 @@
       "q": 5,
       "faction": "nguy",
       "school": "bo",
+      "school2": "ky",
       "base": [
         73,
         77,
@@ -574,6 +579,7 @@
       "q": 5,
       "faction": "ngo",
       "school": "muu",
+      "school2": "cung",
       "base": [
         58,
         43,
@@ -598,6 +604,7 @@
       "q": 5,
       "faction": "thuc",
       "school": "thuong",
+      "school2": "ky",
       "base": [
         73,
         77,
@@ -622,6 +629,7 @@
       "q": 4,
       "faction": "thuc",
       "school": "bo",
+      "school2": "ky",
       "base": [
         76,
         59,
@@ -646,6 +654,7 @@
       "q": 4,
       "faction": "nguy",
       "school": "muu",
+      "school2": "bo",
       "base": [
         46,
         34,
@@ -670,6 +679,7 @@
       "q": 4,
       "faction": "ngo",
       "school": "ky",
+      "school2": "thuong",
       "base": [
         54,
         76,
@@ -694,6 +704,7 @@
       "q": 4,
       "faction": "nguy",
       "school": "bo",
+      "school2": "thuong",
       "base": [
         76,
         59,
@@ -718,6 +729,7 @@
       "q": 4,
       "faction": "nguy",
       "school": "ky",
+      "school2": "bo",
       "base": [
         54,
         76,
@@ -742,6 +754,7 @@
       "q": 4,
       "faction": "thuc",
       "school": "cung",
+      "school2": "ky",
       "base": [
         51,
         71,
@@ -766,6 +779,7 @@
       "q": 4,
       "faction": "ngo",
       "school": "muu",
+      "school2": "cung",
       "base": [
         46,
         34,
@@ -790,6 +804,7 @@
       "q": 4,
       "faction": "thuc",
       "school": "ky",
+      "school2": "thuong",
       "base": [
         54,
         76,
@@ -814,6 +829,7 @@
       "q": 3,
       "faction": "nguy",
       "school": "ky",
+      "school2": "bo",
       "base": [
         43,
         61,
@@ -838,6 +854,7 @@
       "q": 3,
       "faction": "ngo",
       "school": "bo",
+      "school2": "cung",
       "base": [
         43,
         61,
@@ -862,6 +879,7 @@
       "q": 3,
       "faction": "ngo",
       "school": "cung",
+      "school2": "ky",
       "base": [
         40,
         57,
@@ -886,6 +904,7 @@
       "q": 3,
       "faction": "nguy",
       "school": "bo",
+      "school2": "thuong",
       "base": [
         61,
         47,
@@ -910,6 +929,7 @@
       "q": 3,
       "faction": "thuc",
       "school": "thuong",
+      "school2": "bo",
       "base": [
         43,
         61,
@@ -934,6 +954,7 @@
       "q": 3,
       "faction": "quan",
       "school": "thuong",
+      "school2": "ky",
       "base": [
         43,
         61,
@@ -958,6 +979,7 @@
       "q": 3,
       "faction": "quan",
       "school": "bo",
+      "school2": "ky",
       "base": [
         61,
         47,
@@ -982,6 +1004,7 @@
       "q": 3,
       "faction": "quan",
       "school": "muu",
+      "school2": "cung",
       "base": [
         36,
         27,
@@ -1006,6 +1029,7 @@
       "q": 2,
       "faction": "thuc",
       "school": "thuong",
+      "school2": "bo",
       "base": [
         36,
         38,
@@ -1030,6 +1054,7 @@
       "q": 2,
       "faction": "thuc",
       "school": "bo",
+      "school2": "thuong",
       "base": [
         47,
         37,
@@ -1054,6 +1079,7 @@
       "q": 2,
       "faction": "nguy",
       "school": "cung",
+      "school2": "muu",
       "base": [
         32,
         44,
@@ -1078,6 +1104,7 @@
       "q": 2,
       "faction": "ngo",
       "school": "thuong",
+      "school2": "cung",
       "base": [
         36,
         38,
@@ -1102,6 +1129,7 @@
       "q": 2,
       "faction": "quan",
       "school": "muu",
+      "school2": "cung",
       "base": [
         28,
         21,
@@ -1126,6 +1154,7 @@
       "q": 1,
       "faction": "quan",
       "school": "bo",
+      "school2": "thuong",
       "base": [
         35,
         27,
@@ -1150,6 +1179,7 @@
       "q": 1,
       "faction": "ngo",
       "school": "cung",
+      "school2": "bo",
       "base": [
         23,
         33,
@@ -2596,6 +2626,113 @@
       ],
       "reqQuanMac": 8,
       "startLevel": 0
+    }
+  ],
+  "troopVariants": [
+    {
+      "id": "daoVe",
+      "troop": "bo",
+      "name": "Đao Vệ",
+      "desc": "Đao và khiên, cân bằng công thủ.",
+      "weight": 1
+    },
+    {
+      "id": "phuVe",
+      "troop": "bo",
+      "name": "Phủ Vệ",
+      "desc": "Rìu lớn, đánh mạnh.",
+      "weight": 1
+    },
+    {
+      "id": "thuanVe",
+      "troop": "bo",
+      "name": "Thuẫn Vệ",
+      "desc": "Khiên lớn, phòng thủ chắc.",
+      "weight": 1
+    },
+    {
+      "id": "kichVe",
+      "troop": "thuong",
+      "name": "Kích Vệ",
+      "desc": "Kích dài, vừa đâm vừa móc.",
+      "weight": 1
+    },
+    {
+      "id": "thuongVe",
+      "troop": "thuong",
+      "name": "Thương Vệ",
+      "desc": "Thương nhẹ, ra đòn nhanh.",
+      "weight": 1
+    },
+    {
+      "id": "giaoVe",
+      "troop": "thuong",
+      "name": "Giáo Vệ",
+      "desc": "Giáo dài chặn kỵ binh.",
+      "weight": 1
+    },
+    {
+      "id": "quanMa",
+      "troop": "ky",
+      "name": "Quân Mã",
+      "desc": "Kỵ binh ngựa chiến cơ động.",
+      "weight": 1
+    },
+    {
+      "id": "quanTuong",
+      "troop": "ky",
+      "name": "Quân Tượng",
+      "desc": "Voi chiến, chậm mà cực khỏe.",
+      "weight": 1
+    },
+    {
+      "id": "thietKy",
+      "troop": "ky",
+      "name": "Thiết Kỵ",
+      "desc": "Kỵ binh giáp nặng.",
+      "weight": 1
+    },
+    {
+      "id": "truongCung",
+      "troop": "cung",
+      "name": "Trường Cung",
+      "desc": "Cung dài bắn xa.",
+      "weight": 1
+    },
+    {
+      "id": "lienNo",
+      "troop": "cung",
+      "name": "Liên Nỏ",
+      "desc": "Nỏ bắn liên tiếp.",
+      "weight": 1
+    },
+    {
+      "id": "hoaTien",
+      "troop": "cung",
+      "name": "Hỏa Tiễn",
+      "desc": "Tên lửa đốt doanh trại.",
+      "weight": 1
+    },
+    {
+      "id": "thamMuu",
+      "troop": "muu",
+      "name": "Tham Mưu",
+      "desc": "Bày kế, giữ vững trận tuyến.",
+      "weight": 1
+    },
+    {
+      "id": "quanSu",
+      "troop": "muu",
+      "name": "Quân Sư",
+      "desc": "Mưu kế đánh mạnh.",
+      "weight": 1
+    },
+    {
+      "id": "thuyetKhach",
+      "troop": "muu",
+      "name": "Thuyết Khách",
+      "desc": "Lung lạc quân địch.",
+      "weight": 1
     }
   ]
 }

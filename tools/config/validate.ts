@@ -94,7 +94,9 @@ export function validateConfig(cfg: GameConfig): string[] {
   for (const [id, h] of Object.entries(cfg.heroes ?? {})) {
     if (!cfg.qualities[String(h.q)]) e('Võ tướng', `${id}: phẩm ${h.q} không có trong sheet Phẩm chất`);
     if (!cfg.factions[h.faction]) e('Võ tướng', `${id}: phe "${h.faction}" không có trong sheet Phe`);
-    if (!cfg.troopTypes[h.school]) e('Võ tướng', `${id}: sở trường "${h.school}" không có trong sheet Binh chủng`);
+    if (!cfg.troopTypes[h.school]) e('Võ tướng', `${id}: binh chủng 1 "${h.school}" không có trong sheet Binh chủng`);
+    if (!cfg.troopTypes[h.school2]) e('Võ tướng', `${id}: binh chủng 2 "${h.school2}" không có trong sheet Binh chủng`);
+    if (h.school === h.school2) e('Võ tướng', `${id}: hai binh chủng phải khác nhau`);
     if (!cfg.skills[h.skill]) e('Võ tướng', `${id}: chiến pháp "${h.skill}" không có trong sheet Chiến pháp`);
     h.palette.forEach((c) => { if (!COLOR.test(c)) e('Võ tướng', `${id}: màu "${c}" phải dạng #RRGGBB`); });
   }
@@ -127,6 +129,19 @@ export function validateConfig(cfg: GameConfig): string[] {
     if (q.cond.type !== 'stage' && !(q.cond.value > 0)) e('Nhiệm vụ', `${q.id}: cần giá trị > 0`);
     checkCost('Nhiệm vụ', q.id, q.reward);
   }
+  // Loại binh chủng
+  const vIds = new Set<string>();
+  for (const v of cfg.troopVariants ?? []) {
+    if (vIds.has(v.id)) e('Loại binh chủng', `mã "${v.id}" bị trùng`);
+    vIds.add(v.id);
+    if (!cfg.troopTypes?.[v.troop]) e('Loại binh chủng', `${v.id}: binh chủng "${v.troop}" không có trong sheet Binh chủng`);
+  }
+  for (const t of Object.keys(cfg.troopTypes ?? {})) {
+    const list = (cfg.troopVariants ?? []).filter((v) => v.troop === t);
+    if (!list.length) e('Loại binh chủng', `binh chủng "${t}" chưa có loại nào`);
+    else if (!list.some((v) => v.weight > 0)) e('Loại binh chủng', `binh chủng "${t}": cần ít nhất một loại có tỉ lệ ra > 0`);
+  }
+
   // Trận hình
   const fIds = new Set<string>();
   if (!cfg.formations?.length) e('Trận hình', 'cần ít nhất một trận hình');

@@ -264,7 +264,7 @@ function readKv(ws: ExcelJS.Worksheet, cfg: GameConfig, errors: string[], warnin
 }
 
 // Thứ tự đọc: sheet sau có thể dựa vào dữ liệu sheet trước (danh sách tài nguyên, phe, hệ...)
-const ORDER = ['Cân bằng', 'Thưởng phe', 'Tài nguyên', 'Vật phẩm', 'Phe', 'Phẩm chất', 'Bậc binh chủng', 'Binh chủng', 'Chiến pháp', 'Công trình', 'Võ tướng', 'Chương', 'Ô trang bị', 'Phẩm trang bị', 'Nhiệm vụ', 'Cửa hàng', 'Gói ưu đãi', 'Gói nạp', 'Trận hình'];
+const ORDER = ['Cân bằng', 'Thưởng phe', 'Tài nguyên', 'Vật phẩm', 'Phe', 'Phẩm chất', 'Bậc binh chủng', 'Binh chủng', 'Loại binh chủng', 'Chiến pháp', 'Công trình', 'Võ tướng', 'Chương', 'Ô trang bị', 'Phẩm trang bị', 'Nhiệm vụ', 'Cửa hàng', 'Gói ưu đãi', 'Gói nạp', 'Trận hình'];
 
 export async function importXlsx(path = XLSX_PATH): Promise<ImportResult> {
   const errors: string[] = [];
@@ -312,7 +312,7 @@ export async function importXlsx(path = XLSX_PATH): Promise<ImportResult> {
 
 /** Sắp khóa cấp cao nhất theo thứ tự cố định cho file JSON dễ đọc */
 function orderKeys(cfg: GameConfig): GameConfig {
-  const keys: (keyof GameConfig)[] = ['version', 'balance', 'factionBonus', 'resources', 'items', 'buildings', 'buildingOrder', 'factions', 'qualities', 'heroes', 'starterHeroes', 'skills', 'troopTypes', 'troopOrder', 'tiers', 'chapters', 'stagesPerChapter', 'equipSlots', 'equipQualities', 'quests', 'shop', 'packs', 'topups', 'formations'];
+  const keys: (keyof GameConfig)[] = ['version', 'balance', 'factionBonus', 'resources', 'items', 'buildings', 'buildingOrder', 'factions', 'qualities', 'heroes', 'starterHeroes', 'skills', 'troopTypes', 'troopOrder', 'tiers', 'chapters', 'stagesPerChapter', 'equipSlots', 'equipQualities', 'quests', 'shop', 'packs', 'topups', 'formations', 'troopVariants'];
   const out = {} as Record<string, unknown>;
   for (const k of keys) out[k] = cfg[k];
   return out as unknown as GameConfig;

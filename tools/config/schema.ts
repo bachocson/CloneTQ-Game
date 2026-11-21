@@ -192,6 +192,7 @@ export const BALANCE_NOTES: Record<string, string> = {
   'balance.skillCostBac.base': 'Bạc nâng chiến pháp = hệ số × cấp ^ lũy thừa',
   'balance.skillCostBac.exp': 'Lũy thừa giá nâng chiến pháp',
   'balance.skillHeroLevelStep': 'Cứ bao nhiêu cấp võ tướng thì được thêm 1 cấp chiến pháp tối đa',
+  'balance.variantRerollCost': 'Nguyên bảo mỗi lần đổi ngẫu nhiên loại binh chủng của một tướng',
   'balance.formation.costBacBase': 'Bạc nâng trận hình lên cấp L+1 = gốc × hệ số tăng ^ L',
   'balance.formation.costBacGrowth': 'Hệ số tăng giá bạc mỗi cấp trận hình',
   'balance.formation.costBiKipBase': 'Tàn quyển binh pháp nâng trận hình = gốc + L × mỗi cấp',
@@ -361,7 +362,8 @@ export const SHEETS: SheetSpec[] = [
       { key: 'name', label: 'Tên', type: 'text', required: true, width: 18 },
       { key: 'q', label: 'Phẩm', type: 'int', required: true, min: 1, note: 'Số trong sheet Phẩm chất' },
       { key: 'faction', label: 'Phe', type: 'enum', required: true, enumMap: Object.fromEntries(Object.keys(cfg.factions).map((k) => [k, k])) },
-      { key: 'school', label: 'Sở trường', type: 'enum', required: true, enumMap: Object.fromEntries(Object.keys(cfg.troopTypes).map((k) => [k, k])) },
+      { key: 'school', label: 'Binh chủng 1 (sở trường)', type: 'enum', required: true, enumMap: Object.fromEntries(Object.keys(cfg.troopTypes).map((k) => [k, k])), note: 'Dẫn binh chủng này được cộng công theo balance.combat.schoolBonus' },
+      { key: 'school2', label: 'Binh chủng 2', type: 'enum', required: true, enumMap: Object.fromEntries(Object.keys(cfg.troopTypes).map((k) => [k, k])) },
       { key: 'b0', label: 'Thống Soái gốc', type: 'num', required: true, min: 0 },
       { key: 'b1', label: 'Vũ Lực gốc', type: 'num', required: true, min: 0 },
       { key: 'b2', label: 'Trí Lực gốc', type: 'num', required: true, min: 0 },
@@ -374,13 +376,13 @@ export const SHEETS: SheetSpec[] = [
       { key: 'bio', label: 'Tiểu sử', type: 'text', width: 50 },
     ],
     toRows: (cfg) => Object.entries(cfg.heroes).map(([id, h]) => ({
-      id, name: h.name, q: h.q, faction: h.faction, school: h.school,
+      id, name: h.name, q: h.q, faction: h.faction, school: h.school, school2: h.school2,
       b0: h.base[0], b1: h.base[1], b2: h.base[2], g0: h.growth[0], g1: h.growth[1], g2: h.growth[2],
       skill: h.skill, ...palToRow(h.palette), starter: cfg.starterHeroes.includes(id), bio: h.bio,
     })),
     apply: (rows, cfg) => {
       cfg.heroes = Object.fromEntries(rows.map((r) => [r.id as string, {
-        name: r.name as string, q: r.q as number, faction: r.faction as string, school: r.school as string,
+        name: r.name as string, q: r.q as number, faction: r.faction as string, school: r.school as string, school2: r.school2 as string,
         base: [r.b0, r.b1, r.b2] as [number, number, number], growth: [r.g0, r.g1, r.g2] as [number, number, number],
         skill: r.skill as string, palette: rowToPal(r), bio: (r.bio as string) ?? '',
       }]));
@@ -458,6 +460,22 @@ export const SHEETS: SheetSpec[] = [
     toRows: (cfg) => cfg.tiers.map((t, i) => ({ tier: i + 1, mult: t.mult, reqLuyenVo: t.reqLuyenVo, ...costToRow('gia', t.cost) })),
     apply: (rows, cfg) => {
       cfg.tiers = [...rows].sort((a, b) => (a.tier as number) - (b.tier as number)).map((r) => ({ mult: r.mult as number, reqLuyenVo: (r.reqLuyenVo as number) ?? 0, cost: rowToCost('gia', r) }));
+    },
+  },
+  {
+    name: 'Loại binh chủng',
+    kind: 'table',
+    note: 'Mỗi binh chủng có nhiều loại. Khi người chơi bấm đổi loại binh chủng, mỗi binh chủng của tướng được chọn ngẫu nhiên một loại theo cột Tỉ lệ ra.',
+    columns: (cfg) => [
+      { key: 'id', label: 'Mã', type: 'id', required: true, width: 14 },
+      { key: 'troop', label: 'Binh chủng', type: 'enum', required: true, enumMap: Object.fromEntries(Object.keys(cfg.troopTypes).map((k) => [k, k])) },
+      { key: 'name', label: 'Tên', type: 'text', required: true, width: 16 },
+      { key: 'desc', label: 'Mô tả', type: 'text', width: 40 },
+      { key: 'weight', label: 'Tỉ lệ ra', type: 'num', min: 0, note: 'Trọng số khi chọn ngẫu nhiên. Bằng nhau là ngang tỉ lệ. 0 = không bao giờ ra.' },
+    ],
+    toRows: (cfg) => (cfg.troopVariants ?? []).map((v) => ({ ...v })),
+    apply: (rows, cfg) => {
+      cfg.troopVariants = rows.map((r) => ({ id: r.id as string, troop: r.troop as string, name: r.name as string, desc: (r.desc as string) ?? '', weight: (r.weight as number) ?? 1 }));
     },
   },
   {

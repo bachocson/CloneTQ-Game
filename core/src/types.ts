@@ -47,7 +47,10 @@ export interface HeroDef {
   name: string;
   q: number;
   faction: string;
+  /** binh chủng thứ nhất (sở trường, được cộng công) */
   school: string;
+  /** binh chủng thứ hai */
+  school2: string;
   base: [number, number, number];
   growth: [number, number, number];
   skill: string;
@@ -97,6 +100,17 @@ export interface TroopDef {
   speed: number;
   beats: string[];
   tiers: string[];
+}
+
+/** Loại binh chủng: mỗi binh chủng có nhiều loại (vd Thương binh: Kích Vệ, Thương Vệ, Giáo Vệ). */
+export interface TroopVariantDef {
+  id: string;
+  /** mã binh chủng */
+  troop: string;
+  name: string;
+  desc: string;
+  /** trọng số khi đổi ngẫu nhiên */
+  weight: number;
 }
 
 export interface TierDef {
@@ -276,6 +290,8 @@ export interface BalanceConfig {
   skillHeroLevelStep: number;
   /** giá nâng trận hình lên cấp L+1: bạc = costBacBase × costBacGrowth^L, tàn quyển = costBiKipBase + L × costBiKipPerLevel */
   formation: { costBacBase: number; costBacGrowth: number; costBiKipBase: number; costBiKipPerLevel: number };
+  /** nguyên bảo mỗi lần đổi ngẫu nhiên loại binh chủng của một tướng */
+  variantRerollCost: number;
 }
 
 export interface GameConfig {
@@ -303,6 +319,7 @@ export interface GameConfig {
   packs: PackDef[];
   topups: TopupDef[];
   formations: FormationDef[];
+  troopVariants: TroopVariantDef[];
 }
 
 // ---------- State lưu game ----------
@@ -312,7 +329,10 @@ export interface Hero {
   tid: string;
   level: number;
   exp: number;
+  /** binh chủng đang dẫn (một trong 2 binh chủng của tướng) */
   troopType: string;
+  /** loại đang có của từng binh chủng: mã binh chủng → mã loại */
+  variants: Record<string, string>;
   troops: number;
   skillLv: number;
   equip: Record<string, number | null>;
