@@ -16,6 +16,18 @@ Phiên bản 0.3: luật chơi viết bằng TypeScript, dùng chung được ch
 | `cap-nhat-du-lieu.bat` | Kiểm tra file Excel và cập nhật dữ liệu game (khi không chạy `choi-thu.bat`). |
 | `bot-can-bang.bat` | Cho bot tự chơi 7 ngày, xem nhịp độ tiến trình sau khi đổi số. |
 
+## Công cụ test (cheat)
+
+Trong bản thử nghiệm có nút đỏ **TEST** ở góc trên bên phải (hoặc tab Nhiệm vụ → Công cụ test). Bảng này cho phép:
+
+- Đầy kho, cộng 10K/100K tài nguyên, cộng nguyên bảo, cộng vật phẩm, hồi đầy thể lực
+- Tua nhanh 10 phút / 1 giờ / 8 giờ (như thể đã offline), xây xong ngay, làm mới tửu quán
+- Đặt cấp Chúa Công, đưa mọi công trình lên một cấp
+- Mọi tướng lên cấp tối đa và đầy quân, binh chủng bậc tối đa, chiến pháp tối đa, thêm tướng bất kỳ
+- Mở khóa tới một chương (các ải trước đạt 3 sao)
+
+Save đã dùng cheat được đánh dấu (`stats.cheats`). Khi phát hành, build bằng `npm run build:release`: nút TEST và bảng cheat không xuất hiện.
+
 ## Sửa số liệu: `config/DuLieuGame.xlsx`
 
 Mỗi sheet là một loại dữ liệu: Cân bằng, Công trình, Võ tướng, Chiến pháp, Binh chủng, Bậc binh chủng, Chương, Nhiệm vụ, Trang bị… Sheet **Hướng dẫn** trong file giải thích quy tắc. Rê chuột vào tiêu đề cột để xem ghi chú.
@@ -52,7 +64,8 @@ npm run config:export    # JSON → Excel (sao lưu file Excel cũ trước khi 
 npm test                 # test engine + test cấu hình
 npm run typecheck        # kiểm tra kiểu TypeScript
 npm run bot -- --days=7 --interval=15 --active=14
-npm run build            # dist/game.html: cả game trong một file
+npm run build            # dist/game.html: cả game trong một file (có công cụ test)
+npm run build:release    # như trên nhưng tắt công cụ test, dùng khi phát hành
 ```
 
 ## Kế hoạch

@@ -38,4 +38,4 @@
    - Mình viết các component: thanh tài nguyên, danh sách công trình, đội hình, phát lại trận đánh, lưu game. Mỗi component gắn vào node theo tên, nên bạn kéo thả, đổi hình, đổi bố cục thoải mái mà không cần sửa code.
    - Kiểm tra: kết nối máy Windows vào phiên làm việc (Remote Control trong ứng dụng Claude) để mình chạy build và xem lỗi trực tiếp, hoặc bạn build rồi gửi ảnh và lỗi.
 3. **Android:** build từ Cocos Creator (cần Android Studio/SDK), thử trên máy thật.
-4. **Server:** Node.js + PostgreSQL. Client gửi hành động, server chạy `core/` để xác nhận. Thời gian offline tính theo giờ server.
+4. **Server:** Node.js + PostgreSQL. Client gửi hành động, server chạy `core/` để xác nhận. Thời gian offline tính theo giờ server. Server **không** nhận các lệnh trong `core/src/cheats.ts` (chỉ dùng để test trên máy).

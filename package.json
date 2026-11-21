@@ -12,7 +12,8 @@
     "bot": "tsx tools/bot.ts",
     "dev": "node tools/dev.mjs",
     "build": "node tools/build-web.mjs",
-    "build:fragment": "node tools/build-web.mjs --fragment"
+    "build:fragment": "node tools/build-web.mjs --fragment",
+    "build:release": "node tools/build-web.mjs --release"
   },
   "license": "UNLICENSED",
   "devDependencies": {

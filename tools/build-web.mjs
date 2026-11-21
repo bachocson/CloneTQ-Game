@@ -1,6 +1,7 @@
 // Đóng gói bản web.
 //   node tools/build-web.mjs              → web/build/ (dùng với web/index.html) + dist/game.html (một file duy nhất)
 //   node tools/build-web.mjs --fragment   → dist/fragment.html (bỏ <html>/<head>, để đăng lên claude.ai)
+//   node tools/build-web.mjs --release    → như trên nhưng TẮT công cụ test (cheat), dùng khi phát hành
 import { build } from 'esbuild';
 import { readFileSync, writeFileSync, mkdirSync, copyFileSync } from 'node:fs';
 
@@ -10,14 +11,15 @@ export const ESBUILD_OPTS = {
   format: 'iife',
   target: 'es2019',
   loader: { '.json': 'json' },
+  define: { __DEV_TOOLS__: 'true' },
 };
 
 const FONTS = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Paytone+One&display=swap">';
 
-export async function buildWeb({ fragment = false } = {}) {
+export async function buildWeb({ fragment = false, release = false } = {}) {
   mkdirSync('web/build', { recursive: true });
   mkdirSync('dist', { recursive: true });
-  await build({ ...ESBUILD_OPTS, minify: true, outfile: 'web/build/app.js' });
+  await build({ ...ESBUILD_OPTS, define: { __DEV_TOOLS__: release ? 'false' : 'true' }, minify: true, outfile: 'web/build/app.js' });
   copyFileSync('web/src/styles.css', 'web/build/app.css');
 
   const code = readFileSync('web/build/app.js', 'utf8').replace(/<\/script/gi, '<\\/script');
@@ -31,9 +33,9 @@ export async function buildWeb({ fragment = false } = {}) {
     ? `${head}\n${main}\n`
     : `<!doctype html>\n<html lang="vi">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n<meta name="theme-color" content="#3d6f9e">\n${head}\n</head>\n<body>\n${main}\n</body>\n</html>\n`;
   writeFileSync(out, page);
-  console.log(`Đã ghi web/build/ và ${out} (${(page.length / 1024).toFixed(1)} KB)`);
+  console.log(`Đã ghi web/build/ và ${out} (${(page.length / 1024).toFixed(1)} KB)${release ? ' — bản phát hành, đã tắt công cụ test' : ' — có công cụ test'}`);
 }
 
 if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith('build-web.mjs')) {
-  await buildWeb({ fragment: process.argv.includes('--fragment') });
+  await buildWeb({ fragment: process.argv.includes('--fragment'), release: process.argv.includes('--release') });
 }

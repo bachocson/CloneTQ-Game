@@ -35,6 +35,10 @@ const storage = {
 };
 import { heroSprite, buildingSprite, icon, cityGround } from './sprites.js';
 
+// Bật/tắt công cụ test lúc build (esbuild define). Thiếu cờ thì coi như bật.
+// eslint-disable-next-line no-undef
+const DEV_TOOLS = typeof __DEV_TOOLS__ === 'undefined' ? true : __DEV_TOOLS__;
+
 const now = () => Date.now();
 let S = null;
 const ui = {
@@ -135,6 +139,7 @@ function renderTop() {
         <div class="row"><span class="top-title disp">Chúa Công</span><span class="spacer"></span><span class="num disp" style="font-size:12px">${fmt(S.player.exp)}/${fmt(need)}</span></div>
         ${bar(S.player.exp, need, 'blue')}
       </div>
+      ${DEV_TOOLS ? '<button class="dev-btn disp" data-act="cheatOpen" aria-label="Mở công cụ test">TEST</button>' : ''}
     </div>
     <div class="res-row">
       ${['luong', 'go', 'sat', 'bac', 'nguyenbao'].map(pill).join('')}
@@ -546,6 +551,7 @@ function viewQuests() {
     <h2 class="disp">Cài đặt</h2>
     <div class="panel" style="display:flex;flex-direction:column;gap:8px">
       <p class="muted">Tiến trình tự lưu trên trình duyệt này. Muốn chuyển sang máy khác: chép mã lưu rồi dán ở máy kia.</p>
+      ${DEV_TOOLS ? '<button class="btn small red" data-act="cheatOpen">Công cụ test (cheat)</button>' : ''}
       <div class="row wrap"><button class="btn small ghost" data-act="exportSave">Chép mã lưu</button><button class="btn small ghost" data-act="importSave">Nạp mã lưu đã dán</button></div>
       <textarea id="saveBox" placeholder="Dán mã lưu vào đây rồi bấm Nạp"></textarea>
       <div class="row"><span class="muted">Đã đánh ${S.stats.battles} trận, thắng ${S.stats.wins}.</span><span class="spacer"></span><button class="btn small red" data-act="reset">${confirmReset ? 'Chạm lần nữa để chơi lại từ đầu' : 'Chơi lại từ đầu'}</button></div>
@@ -573,6 +579,7 @@ function renderSheet() {
     return;
   }
   const inner = ui.sheet.type === 'hero' ? heroSheet(ui.sheet.uid)
+    : ui.sheet.type === 'cheat' && DEV_TOOLS ? cheatSheet()
     : ui.sheet.type === 'building' ? buildingSheet(ui.sheet.id)
     : equipPickSheet(ui.sheet.uid, ui.sheet.slot);
   const prevScroll = wrap.querySelector('.sheet')?.scrollTop || 0;
@@ -1019,11 +1026,85 @@ function startFight(id) {
   openBattle(r);
 }
 
+// ---------- Công cụ test (cheat) ----------
+// Chỉ có khi build bật công cụ test (npm run dev, npm run build). npm run build:release tắt hẳn.
+function cheatSheet() {
+  const cap = G.storageCap(S);
+  const unowned = Object.entries(HEROES).filter(([tid]) => !S.heroes.some((h) => h.tid === tid)).sort((a, b) => b[1].q - a[1].q);
+  const btn = (op, label, extra = '', cls = 'small') => `<button class="btn ${cls}" data-act="cheat" data-op="${op}" ${extra}>${label}</button>`;
+  const res = ['luong', 'go', 'sat', 'bac'];
+  return `
+    <div class="row"><h3 style="font-size:20px">Công cụ test</h3><span class="chip" style="background:#ffe3dc">chỉ bản thử nghiệm</span><span class="spacer"></span><button class="btn small ghost" data-act="closeSheet">✕</button></div>
+    <p class="muted">Save này đã dùng cheat ${S.stats.cheats || 0} lần. Bản phát hành không có bảng này.</p>
+
+    <div class="panel cheat">
+      <b>Tài nguyên</b>
+      <div class="row wrap">${btn('fill', `Đầy kho (${fmt(cap)})`, '', 'small gold')}${btn('add', '+10K mỗi loại', 'data-n="10000"')}${btn('add', '+100K mỗi loại', 'data-n="100000"')}</div>
+      <div class="row wrap">${res.map((k) => btn('addOne', `${img(icon(k))} +50K`, `data-k="${k}" data-n="50000"`, 'small ghost')).join('')}</div>
+      <div class="row wrap">${btn('addOne', `${img(icon('nguyenbao'))} +1000`, 'data-k="nguyenbao" data-n="1000"', 'small ghost')}${btn('items', 'Mỗi vật phẩm +20', 'data-n="20"', 'small ghost')}${btn('stamina', `${img(icon('stamina'))} Đầy thể lực`, '', 'small ghost')}</div>
+    </div>
+
+    <div class="panel cheat">
+      <b>Thời gian</b>
+      <div class="row wrap">${btn('ff', 'Tua 10 phút', 'data-n="0.1667"')}${btn('ff', 'Tua 1 giờ', 'data-n="1"')}${btn('ff', 'Tua 8 giờ', 'data-n="8"')}${btn('finish', 'Xây xong ngay', S.queue ? '' : 'disabled', 'small gold')}${btn('tavern', 'Làm mới tửu quán', '', 'small ghost')}</div>
+      <p class="muted">Tua giờ như thể đã offline: tài nguyên sinh thêm (tối đa ${BAL.offlineCapHours} giờ), công trình xây xong, thể lực hồi.</p>
+    </div>
+
+    <div class="panel cheat">
+      <b>Chúa Công và công trình</b>
+      <div class="row wrap"><label for="cheatLv">Cấp Chúa Công</label><input id="cheatLv" type="number" min="1" max="${BAL.playerMaxLevel}" value="${S.player.level}">${btn('level', 'Đặt')}</div>
+      <div class="row wrap"><label for="cheatBld">Mọi công trình lên cấp</label><input id="cheatBld" type="number" min="0" max="${BAL.playerMaxLevel}" value="${S.buildings.chinhDien}">${btn('buildings', 'Đặt')}</div>
+      <p class="muted">Công trình không vượt cấp Chúa Công; công trình chưa mở theo cấp thì giữ nguyên.</p>
+    </div>
+
+    <div class="panel cheat">
+      <b>Võ tướng và binh chủng</b>
+      <div class="row wrap">${btn('maxHeroes', 'Mọi tướng lên cấp tối đa + đầy quân')}${btn('troops', 'Đầy quân', '', 'small ghost')}${btn('tiers', `Binh chủng bậc ${C.tiers.length}`, '', 'small ghost')}${btn('skills', 'Chiến pháp tối đa (theo cấp tướng)', '', 'small ghost')}</div>
+      <div class="row wrap"><label for="cheatHero">Thêm tướng</label>
+        <select id="cheatHero">${unowned.map(([tid, h]) => `<option value="${tid}">${esc(h.name)} · ${QUALITIES[h.q].name}</option>`).join('')}</select>
+        ${btn('hero', 'Thêm', unowned.length ? '' : 'disabled')}</div>
+    </div>
+
+    <div class="panel cheat">
+      <b>Phó bản</b>
+      <div class="row wrap"><label for="cheatCh">Mở tới chương</label>
+        <select id="cheatCh">${CHAPTERS.map((c) => `<option value="${c.id}">${c.id}. ${esc(c.name)}</option>`).join('')}</select>
+        ${btn('chapter', 'Mở')}</div>
+      <p class="muted">Mọi ải trước chương đó đạt 3 sao (càn quét được); cấp Chúa Công nâng lên mức chương yêu cầu nếu đang thấp hơn.</p>
+    </div>`;
+}
+
+function runCheat(d) {
+  const val = (id) => document.getElementById(id)?.value;
+  const t = now();
+  switch (d.op) {
+    case 'fill': return G.cheatFillStorage(S);
+    case 'add': return G.cheatAdd(S, Object.fromEntries(['luong', 'go', 'sat', 'bac'].map((k) => [k, Number(d.n)])));
+    case 'addOne': return G.cheatAdd(S, { [d.k]: Number(d.n) });
+    case 'items': return G.cheatAddItems(S, Number(d.n));
+    case 'stamina': return G.cheatFullStamina(S, t);
+    case 'ff': return G.cheatFastForward(S, t, Number(d.n));
+    case 'finish': return G.cheatFinishBuild(S);
+    case 'tavern': return G.cheatResetTavern(S, t);
+    case 'level': return G.cheatSetPlayerLevel(S, Number(val('cheatLv')));
+    case 'buildings': return G.cheatSetBuildings(S, Number(val('cheatBld')));
+    case 'maxHeroes': return G.cheatMaxHeroes(S);
+    case 'troops': return G.cheatFullTroops(S);
+    case 'tiers': return G.cheatMaxTiers(S);
+    case 'skills': S.heroes.forEach((h) => G.cheatMaxSkill(S, h.uid)); return { ok: true, msg: 'Chiến pháp lên mức tối đa theo cấp tướng' };
+    case 'hero': return G.cheatAddHero(S, val('cheatHero'));
+    case 'chapter': return G.cheatUnlockChapter(S, Number(val('cheatCh')));
+    default: return { ok: false, reason: 'Lệnh không rõ' };
+  }
+}
+
 // ---------- hành động ----------
 const ACTIONS = {
   tab: (d) => { ui.tab = d.id; ui.pickSlot = null; ui.confirm = null; renderAll(); window.scrollTo(0, 0); },
   upgrade: (d) => act(() => G.startUpgrade(S, d.id, now())),
   speedUp: () => act(() => G.speedUp(S, now())),
+  cheatOpen: () => { if (DEV_TOOLS) { ui.sheet = { type: 'cheat' }; renderAll(); } },
+  cheat: (d) => { if (DEV_TOOLS) act(() => runCheat(d)); },
   bldTap: (d) => { ui.sheet = { type: 'building', id: d.id }; renderAll(); },
   goto: (d) => { ui.sheet = null; ui.tab = d.id; if (d.sub) ui.heroTab = d.sub; renderAll(); window.scrollTo(0, 0); },
   heroTab: (d) => { ui.heroTab = d.id; ui.pickSlot = null; renderAll(); },

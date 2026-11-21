@@ -135,3 +135,29 @@ test('đội hình giới hạn số người theo cấp chưởng môn', () => 
   s.player.level = 3;
   assert.ok(G.setTeamSlot(s, 4, r.hero!.uid).ok);
 });
+
+test('công cụ test: cộng tài nguyên, đầy kho, tua giờ, mở chương, thêm tướng', () => {
+  const s = G.newGame(T0, 11);
+  G.cheatAdd(s, { bac: 5000, biKip: 3 });
+  assert.equal(s.res.bac, CFG.balance.startRes.bac + 5000);
+  assert.equal(s.items.biKip, CFG.balance.startItems.biKip + 3);
+  G.cheatFillStorage(s, 100);
+  assert.ok(s.res.luong >= G.storageCap(s));
+
+  G.startUpgrade(s, 'ruong', T0);
+  G.cheatFastForward(s, T0, 1);
+  assert.equal(s.queue, null, 'tua 1 giờ thì công trình ngắn đã xây xong');
+  assert.equal(s.buildings.ruong, 2);
+
+  G.cheatUnlockChapter(s, 3);
+  assert.equal(s.campaign.stars['2-5'], 3);
+  assert.ok(G.isStageUnlocked(s, '3-1'));
+  assert.ok(s.player.level >= CFG.chapters[2].reqLevel);
+
+  const tid = Object.keys(CFG.heroes).find((t) => !s.heroes.some((h) => h.tid === t))!;
+  assert.ok(G.cheatAddHero(s, tid).ok);
+  assert.equal(G.cheatAddHero(s, tid).ok, false, 'không thêm trùng');
+  G.cheatMaxHeroes(s);
+  assert.ok(s.heroes.every((h) => h.level === s.player.level));
+  assert.ok((s.stats.cheats ?? 0) > 0, 'save bị đánh dấu đã dùng cheat');
+});

@@ -278,7 +278,8 @@ export interface GameState {
   campaign: { stars: Record<string, number> };
   tavern: { candidates: string[]; nextFree: number };
   quests: { claimed: Record<string, boolean> };
-  stats: { battles: number; wins: number; forged: number; maxEnhance: number; recruited: number };
+  /** cheats: số lần dùng công cụ test (save có số này > 0 là đã bị chỉnh tay) */
+  stats: { battles: number; wins: number; forged: number; maxEnhance: number; recruited: number; cheats?: number };
   settings: { autoRefill: boolean };
 }
 
